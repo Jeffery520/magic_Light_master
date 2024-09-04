@@ -70,12 +70,14 @@ export default {
 	},
 	watch: {
 		weather: {
-			handled(val) {
-				const { humidity, temperature, weather } = val || {};
-				this.weatherData.name = weather;
-				this.weatherData.icon = weatherIcon[weather];
-				this.weatherData.humidity = humidity || '--';
-				this.weatherData.temperature = temperature || '--';
+			handler(val) {
+				if (val) {
+					const { humidity, temperature, weather } = val || {};
+					this.weatherData.name = weather;
+					this.weatherData.icon = weatherIcon?.[weather];
+					this.weatherData.humidity = humidity || '--';
+					this.weatherData.temperature = temperature || '--';
+				}
 			},
 			deep: true
 		}
@@ -113,7 +115,9 @@ export default {
 				this.weatherData.icon = weatherIcon[weather];
 				this.weatherData.humidity = humidity || '--';
 				this.weatherData.temperature = temperature || '--';
-				this.$emit('change', this.weather);
+
+				this.$emit('change', this.weatherData);
+
 				setTimeout(() => {
 					this.loading = false;
 				}, 300);

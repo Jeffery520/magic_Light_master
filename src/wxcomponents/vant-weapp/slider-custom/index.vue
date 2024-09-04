@@ -1,64 +1,29 @@
 <template>
-	<uni-shadow-root class="vant-weapp-slider-index"
-		><view
-			:class="'custom-class ' + utils.bem('slider', { disabled, vertical })"
-			:style="wrapperStyle"
-			@click="onClick"
-		>
-			<text
-				v-for="num in max"
-				v-if="num >= min"
-				:key="num"
-				class="slider_interval"
-				>{{ num }}</text
-			>
-			<view
-				:class="utils.bem('slider__bar')"
-				:style="barStyle + '; ' + style({ backgroundColor: activeColor })"
-			>
-				<view
-					v-if="range"
-					:class="utils.bem('slider__button-wrapper-left')"
-					:data-index="0"
-					@touchstart="onTouchStart"
-					@touchmove.stop.prevent="onTouchMove"
-					@touchend="onTouchEnd"
-					@touchcancel="onTouchEnd"
-				>
-					<slot v-if="useButtonSlot" name="left-button"></slot>
-					<view v-else :class="utils.bem('slider__button')"></view>
-				</view>
-				<view
-					v-if="range"
-					:class="utils.bem('slider__button-wrapper-right')"
-					:data-index="1"
-					@touchstart="onTouchStart"
-					@touchmove.stop.prevent="onTouchMove"
-					@touchend="onTouchEnd"
-					@touchcancel="onTouchEnd"
-				>
-					<slot v-if="useButtonSlot" name="right-button"></slot>
-					<view v-else :class="utils.bem('slider__button')"></view>
-				</view>
+<uni-shadow-root class="vant-weapp-slider-custom-index"><view :class="'custom-class '+(utils.bem('slider', { disabled, vertical }))" :style="wrapperStyle" @click="onClick">
+    <view class="slider_interval">
+        <text v-for="(num,index) in (max/(step*2)+1)" :key="num" v-if="num*(step*2) >= min">{{ num*(step*2) }}</text>
+  </view>
+  <view :class="utils.bem('slider__bar')" :style="(barStyle)+'; '+(style({ backgroundColor: activeColor }))">
+    <view v-if="range" :class="utils.bem('slider__button-wrapper-left')" :data-index="0" @touchstart="onTouchStart" @touchmove.stop.prevent="onTouchMove" @touchend="onTouchEnd" @touchcancel="onTouchEnd">
+      <slot v-if="useButtonSlot" name="left-button"></slot>
+      <view v-else :class="utils.bem('slider__button')"></view>
+    </view>
+    <view v-if="range" :class="utils.bem('slider__button-wrapper-right')" :data-index="1" @touchstart="onTouchStart" @touchmove.stop.prevent="onTouchMove" @touchend="onTouchEnd" @touchcancel="onTouchEnd">
+      <slot v-if="useButtonSlot" name="right-button"></slot>
+      <view v-else :class="utils.bem('slider__button')"></view>
+    </view>
 
-				<view
-					v-if="!range"
-					:class="utils.bem('slider__button-wrapper')"
-					@touchstart="onTouchStart"
-					@touchmove.stop.prevent="onTouchMove"
-					@touchend="onTouchEnd"
-					@touchcancel="onTouchEnd"
-				>
-					<slot v-if="useButtonSlot" name="button"></slot>
-					<view v-else :class="utils.bem('slider__button')"></view>
-				</view>
-			</view> </view
-	></uni-shadow-root>
+    <view v-if="(!range)" :class="utils.bem('slider__button-wrapper')" @touchstart="onTouchStart" @touchmove.stop.prevent="onTouchMove" @touchend="onTouchEnd" @touchcancel="onTouchEnd">
+      <slot v-if="useButtonSlot" name="button"></slot>
+      <view v-else :class="utils.bem('slider__button')"></view>
+    </view>
+  </view>
+</view></uni-shadow-root>
 </template>
-<wxs src="../wxs/utils.wxs" module="utils"></wxs>
-<wxs src="../wxs/style.wxs" module="style"></wxs>
+<wxs src="../wxs/utils.wxs" module="utils"></wxs><wxs src="../wxs/style.wxs" module="style"></wxs>
 <script>
-global['__wxRoute'] = 'vant-weapp/slider/index';
+
+global['__wxRoute'] = 'vant-weapp/slider-custom/index'
 import { VantComponent } from '../common/component';
 import { touch } from '../mixins/touch';
 import { canIUseModel } from '../common/version';
@@ -94,6 +59,16 @@ VantComponent({
 		},
 		vertical: Boolean,
 		barHeight: null
+	},
+	computed: {
+		interValList() {
+			const arr = [];
+			for (let i = this.min; i <= this.max; i += this.step) {
+				arr.push(i);
+			}
+			console.log(arr);
+			return arr;
+		}
 	},
 	created() {
 		this.updateValue(this.data.value);
@@ -243,77 +218,8 @@ VantComponent({
 		}
 	}
 });
-export default global['__wxComponents']['vant-weapp/slider/index'];
+export default global['__wxComponents']['vant-weapp/slider-custom/index']
 </script>
 <style platform="mp-weixin">
-@import '../common/index.css';
-.van-slider {
-	background-color: var(--slider-inactive-background-color, #ebedf0);
-	border-radius: 999px;
-	height: var(--slider-bar-height, 2px);
-	position: relative;
-}
-.van-slider:before {
-	bottom: calc(var(--padding-xs, 8px) * -1);
-	content: '';
-	left: 0;
-	position: absolute;
-	right: 0;
-	top: calc(var(--padding-xs, 8px) * -1);
-}
-.van-slider__bar {
-	background-color: var(--slider-active-background-color, #1989fa);
-	border-radius: inherit;
-	height: 100%;
-	position: relative;
-	transition: all 0.2s;
-	width: 100%;
-}
-.van-slider__button {
-	background-color: var(--slider-button-background-color, #fff);
-	border-radius: var(--slider-button-border-radius, 50%);
-	box-shadow: var(--slider-button-box-shadow, 0 1px 2px rgba(0, 0, 0, 0.5));
-	height: var(--slider-button-height, 24px);
-	width: var(--slider-button-width, 24px);
-}
-.van-slider__button-wrapper,
-.van-slider__button-wrapper-right {
-	position: absolute;
-	right: 0;
-	top: 50%;
-	transform: translate3d(50%, -50%, 0);
-}
-.van-slider__button-wrapper-left {
-	left: 0;
-	position: absolute;
-	top: 50%;
-	transform: translate3d(-50%, -50%, 0);
-}
-.van-slider--disabled {
-	opacity: var(--slider-disabled-opacity, 0.5);
-}
-.van-slider--vertical {
-	display: inline-block;
-	height: 100%;
-	width: var(--slider-bar-height, 2px);
-}
-.van-slider--vertical .van-slider__button-wrapper,
-.van-slider--vertical .van-slider__button-wrapper-right {
-	bottom: 0;
-	right: 50%;
-	top: auto;
-	transform: translate3d(50%, 50%, 0);
-}
-.van-slider--vertical .van-slider__button-wrapper-left {
-	left: auto;
-	right: 50%;
-	top: 0;
-	transform: translate3d(50%, -50%, 0);
-}
-.van-slider--vertical:before {
-	bottom: 0;
-	left: -8px;
-	right: -8px;
-	top: 0;
-}
+@import '../common/index.css';.van-slider{background-color:var(--slider-inactive-background-color,#ebedf0);border-radius:999px;height:var(--slider-bar-height,2px);position:relative}.van-slider:before{bottom:calc(var(--padding-xs, 8px)*-1);content:"";left:0;position:absolute;right:0;top:calc(var(--padding-xs, 8px)*-1)}.van-slider__bar{background-color:var(--slider-active-background-color,#1989fa);border-radius:inherit;height:100%;position:relative;transition:all .2s;width:100%}.van-slider__button{background-color:var(--slider-button-background-color,#fff);border-radius:var(--slider-button-border-radius,50%);box-shadow:var(--slider-button-box-shadow,0 1px 2px rgba(0,0,0,.5));height:var(--slider-button-height,24px);width:var(--slider-button-width,24px)}.van-slider__button-wrapper,.van-slider__button-wrapper-right{position:absolute;right:0;top:50%;transform:translate3d(50%,-50%,0)}.van-slider__button-wrapper-left{left:0;position:absolute;top:50%;transform:translate3d(-50%,-50%,0)}.van-slider--disabled{opacity:var(--slider-disabled-opacity,.5)}.van-slider--vertical{display:inline-block;height:100%;width:var(--slider-bar-height,2px)}.van-slider--vertical .van-slider__button-wrapper,.van-slider--vertical .van-slider__button-wrapper-right{bottom:0;right:50%;top:auto;transform:translate3d(50%,50%,0)}.van-slider--vertical .van-slider__button-wrapper-left{left:auto;right:50%;top:0;transform:translate3d(50%,-50%,0)}.van-slider--vertical:before{bottom:0;left:-8px;right:-8px;top:0}
 </style>

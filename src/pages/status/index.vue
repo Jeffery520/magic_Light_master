@@ -6,8 +6,7 @@
 			<view class="my_ble_wrap">
 				<BLEStatus v-if="showBle" :showState="false" />
 			</view>
-			<!--			<PageA v-if="bleType === 'A'" />-->
-			<PageB />
+			<PageA />
 		</view>
 		<TabBar current="/pages/status/index" />
 	</view>
@@ -18,15 +17,13 @@ import NavBar from '@/components/NavBar/index.vue';
 import TabBar from '@/components/TabBar/index.vue';
 import BLEStatus from '@/components/BLEStatus/index.vue';
 import PageA from './components/pageA.vue';
-import PageB from './components/pageB.vue';
 
 export default {
 	components: {
 		NavBar,
 		TabBar,
 		BLEStatus,
-		PageA,
-		PageB
+		PageA
 	},
 
 	data() {
@@ -40,10 +37,6 @@ export default {
 		},
 		getBleData() {
 			return this.$store.getters.bleData;
-		},
-		bleType() {
-			const bleName = this.getBleData.connectedDeviceList?.[0]?.name || '';
-			return bleName.indexOf('GMasterLamp') >= 0 ? 'B' : 'A';
 		}
 	},
 	onShow() {

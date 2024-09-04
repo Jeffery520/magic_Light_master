@@ -23,20 +23,20 @@
 			>
 		</view>
 
-		<!-- 单色模式 -->
-		<!--		<view-->
-		<!--			v-if="currentModel == '00' && zoneDataA[zoneIndex]"-->
-		<!--			class="mode_color_wrap"-->
-		<!--		>-->
-		<!--			<color-picker-->
-		<!--				:currentColor="_getColorRgb(zoneDataA[zoneIndex].value4)"-->
-		<!--				@change="colorChange"-->
-		<!--			/>-->
-		<!--		</view>-->
+		单色模式
+		<view
+			v-if="currentModel == '00' && zoneDataA[zoneIndex]"
+			class="mode_color_wrap"
+		>
+			<color-picker
+				:currentColor="_getColorRgb(zoneDataA[zoneIndex].value4)"
+				@change="colorChange"
+			/>
+		</view>
 
 		<!-- 天气模式-->
 		<view v-if="['03'].includes(currentModel)" class="mode_color_wrap">
-			<Weather
+			<WeatherTool
 				:weather="zoneDataA[zoneIndex].weather"
 				@change="weatherChange"
 			/>
@@ -245,7 +245,7 @@
 </template>
 
 <script>
-import Weather from '@/components/Weather/index.vue';
+import WeatherTool from '@/components/Weather/index.vue';
 import ColorPicker from '@/components/ColorPicker/index.vue';
 import util from '@/components/ColorPicker/util.js';
 import ecBLE from '@/utils/ecBLE.js';
@@ -261,7 +261,7 @@ export default {
 		styleIsolation: 'shared'
 	},
 	components: {
-		Weather,
+		WeatherTool,
 		ColorPicker
 	},
 	data() {
@@ -300,6 +300,8 @@ export default {
 		// 分区切换
 		zoneIndexChange(index) {
 			uni.vibrateShort();
+			console.log('zoneIndexChange', index);
+			console.log(this.zoneDataA[index]);
 			this.zoneIndex = index;
 		},
 		// 模式切换

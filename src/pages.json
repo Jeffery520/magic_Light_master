@@ -14,9 +14,6 @@
 		},
 		{
 			"path": "pages/mine/index"
-		},
-		{
-			"path": "pages/bluetooth/index"
 		}
 	],
 	"subpackages": [],
