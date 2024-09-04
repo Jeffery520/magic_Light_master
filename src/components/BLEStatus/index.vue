@@ -1,0 +1,846 @@
+<template>
+	<view class="ble_status_wrap">
+		<view class="ble_status_top">
+			<view>
+				<text v-if="connected && showState" class="ble_status_left"
+					>运行状态：{{ !connected ? '未连接' : '良好' }}</text
+				>
+			</view>
+			<view
+				class="ble_status_right"
+				:class="{ is_connected: connected }"
+				@click="handleOpen"
+			>
+				<image src="~@/static/images/ble_state.png" mode="aspectFit" />
+				<text>{{ connected ? currentBle : '蓝牙连接' }}</text>
+			</view>
+		</view>
+		<van-popup :show="showPopup" @close="handleClose">
+			<view class="ble_list_popup">
+				<view class="ble_list">
+					<view
+						v-for="(item, index) in deviceList"
+						:key="item.name"
+						class="list_item"
+						@click="handleConnect(item, index, true)"
+					>
+						<view class="list_item_left">
+							<image
+								v-if="!item.connected"
+								src="~@/static/images/ble.png"
+								class="list_item-img"
+							></image>
+							<image
+								v-else
+								src="~@/static/images/ble_state.png"
+								class="list_item-img"
+							></image>
+							<text class="list_item-name van-ellipsis">{{ item.name }}</text>
+						</view>
+
+						<view class="list_item_right">
+							<text v-if="item.connected">已连接</text>
+							<van-loading
+								v-if="
+									!item.connected && connectLoading && index === currentIndex
+								"
+								type="spinner"
+								color="#8f98b7"
+								size="16px"
+							/>
+						</view>
+					</view>
+					<view v-if="loading && !deviceList.length" class="search_loading">
+						<van-loading type="spinner" color="#8f98b7" size="24px" />
+						<text>搜索中</text>
+					</view>
+
+					<view v-if="!loading && deviceList.length == 0" class="ble_tips">
+						蓝牙为空，请点击搜索
+					</view>
+				</view>
+				<view v-if="!loading && deviceList.length" class="ble_list_tip"
+					>请点击蓝牙进行连接</view
+				>
+				<view
+					v-if="loading"
+					class="contact_button"
+					@click="handleStopDiscovery(true)"
+				>
+					停止搜索 <van-count-down :time="loadingTime" format="ss" /> s
+				</view>
+				<view v-else class="contact_button" plain @click="handleDiscovery">
+					{{ deviceList.length == 0 ? '搜索蓝牙' : '重新搜索' }}
+				</view>
+			</view>
+		</van-popup>
+		<!--    密码输入弹窗-->
+		<van-popup :show="showPwPopup" :close-on-click-overlay="false">
+			<view class="password_popup">
+				<view class="password_title">
+					<text v-if="passwordType === '0'"
+						>您的密码为初始密码，建议您修改</text
+					>
+					<text v-else>请输入蓝牙密码</text>
+				</view>
+
+				<van-field
+					ref="pwRef"
+					v-model="password"
+					type="number"
+					:maxlength="4"
+					placeholder="请输入4位数字密码"
+					placeholder-style="color:rgba(143, 152, 183, 0.3);font-size:14px;"
+					class="password_input"
+					@input="onPwChange"
+				/>
+				<view class="password_footer">
+					<view
+						class="contact_button contact_button_info"
+						plain
+						@click="handlePwClose"
+					>
+						取消
+					</view>
+					<view class="contact_button" plain @click="handleSendPw">
+						<view class="contact_button_inner">
+							{{ passwordType === '0' ? '修改' : '确认' }}
+						</view>
+					</view>
+				</view>
+			</view>
+		</van-popup>
+	</view>
+</template>
+
+<script>
+import ecBLE from '@/utils/ecBLE';
+import Toast from '@/wxcomponents/vant-weapp/toast/toast';
+import { debounce, throttle, uniqBy } from '@/utils/lodash.min';
+import { hexStrToArr, hexToAscii } from '@/utils/format';
+
+let Timer = null;
+
+export default {
+	options: {
+		styleIsolation: 'shared'
+	},
+	props: {
+		mustConnect: {
+			type: Boolean,
+			default: true
+		},
+		showState: {
+			type: Boolean,
+			default: true
+		}
+	},
+	data() {
+		return {
+			loading: false,
+			showPopup: false,
+			showPwPopup: false,
+			connectLoading: false,
+			loadingTime: 1000 * 30,
+			discoveryTime: new Date().getTime(),
+			currentIndex: -1,
+			password: '',
+			setBleData: {},
+			deviceList: [],
+			myDeviceList: []
+		};
+	},
+	computed: {
+		getBleData() {
+			return this.$store.getters.bleData;
+		},
+		passwordType() {
+			// 0 需要修改密码 1 需要验证密码
+			if (this.setBleData.ecUserPassword !== '0000') return '1';
+			return '0';
+		},
+		connected() {
+			return this.getBleData.connected;
+		},
+		currentBle() {
+			const target = (this.getBleData?.deviceList || []).find(
+				(item) => item?.connected
+			);
+			return target?.name || '蓝牙连接';
+		}
+	},
+	watch: {
+		'getBleData.deviceList': {
+			handler(val) {
+				this.deviceList = val;
+			},
+			deep: true
+		},
+		myDeviceList: {
+			handler(val) {
+				this.$store.dispatch(
+					'setMyBleList',
+					val.filter((a) => a?.deviceId)
+				);
+			},
+			deep: true
+		},
+		setBleData: {
+			handler(val) {
+				this.deviceList = val.deviceList.filter(
+					(item) => item.name.indexOf('GM') >= 0
+				);
+				this.$store.dispatch('setBleData', val);
+			},
+			deep: true
+		},
+		bleData: {
+			handler(val) {
+				if (val.ecUserPasswordPassed === '1') {
+					this.showPwPopup = false;
+				}
+			},
+			deep: true
+		}
+	},
+	created() {
+		if (!this.mustConnect) {
+			return;
+		}
+
+		this.iniBle();
+
+		uni.$on('onShow', () => {
+			this.iniBle();
+		});
+
+		uni.$on('checkPassword', () => {
+			if (!this.getBleData.connected) {
+				Toast('请连接蓝牙');
+				return;
+			}
+
+			if (!this.getBleData?.ecUserPassword) {
+				this._checkPassword();
+			}
+
+			if (this.getBleData?.ecUserPasswordPassed !== '1') {
+				this.showPopup = false;
+				this.showPwPopup = true;
+				return;
+			}
+		});
+
+		uni.$on('receiveMsg', ({ strHex, receiveDataValue }) => {
+			this.setBleData.receiveDataValue = receiveDataValue;
+			this._checkMessage(strHex);
+		});
+	},
+	beforeDestroy() {
+		uni.$off('onShow');
+		uni.$off('checkPassword');
+		uni.$off('receiveMsg');
+		this.handleStopDiscovery();
+	},
+	methods: {
+		iniBle() {
+			this.setBleData = this.getBleData;
+			this.setBleData.deviceList = uniqBy(
+				this.setBleData.deviceList,
+				'deviceId'
+			);
+
+			this.myDeviceList = this.$store.getters.myBleList.map((item) => {
+				item.connected = false;
+				return item;
+			});
+
+			ecBLE.setBleData(this.setBleData);
+
+			setTimeout(() => {
+				ecBLE.checkBleConnected((res) => {
+					const { deviceList, connectedDeviceList } = res;
+					const connected = connectedDeviceList?.length > 0;
+
+					this.setBleData.deviceList = uniqBy(deviceList || [], 'deviceId');
+					this.setBleData.connected = connected;
+
+					if (!connected) {
+						this.handleDiscovery();
+					}
+				});
+
+				// 蓝牙事件监听初始化
+				ecBLE.onBLEConnectionStateChange((res) => {
+					this._onConnectStateChange(res);
+				});
+			}, 60);
+		},
+		handleOpen() {
+			uni.vibrateShort();
+			this.showPopup = true;
+		},
+		handleClose() {
+			uni.vibrateShort();
+			this.showPopup = false;
+			this.handleStopDiscovery();
+		},
+		onPwChange(event) {
+			this.password = event.detail ? event.detail.trim().substring(0, 4) : '';
+		},
+		handlePwClose() {
+			uni.vibrateShort();
+			if (this.passwordType === '0') {
+				this.setBleData.ecUserPasswordPassed = '1';
+			}
+			this.password = '';
+			this.showPwPopup = false;
+		},
+		handleSendPw() {
+			uni.vibrateShort();
+
+			if (this.password?.length < 4) {
+				return Toast('密码最少为4位数');
+			}
+
+			if (!this.getBleData.connected) {
+				this.showPwPopup = false;
+				return Toast('蓝牙已断开');
+			}
+
+			if (this.passwordType === '1') {
+				this.setBleData.ecUserPasswordPassed =
+					this.getBleData.ecUserPassword === this.password.trim() ? '1' : '0';
+				if (this.setBleData.ecUserPasswordPassed === '1') {
+					this.showPwPopup = false;
+					Toast.success('密码校验成功');
+				} else {
+					Toast.success('密码错误');
+				}
+			} else {
+				const arr = this.password.split('').map((s) => '0' + s);
+				const pwStr = `830501${arr.join('')}`;
+				setTimeout(() => {
+					ecBLE.easySendData(pwStr, true);
+				}, 100);
+				setTimeout(() => {
+					ecBLE.easySendData(pwStr, true);
+				}, 1000);
+			}
+		},
+		handleDiscovery: debounce(function (click = false) {
+			if (click) {
+				uni.vibrateShort();
+			}
+			this.handleStopDiscovery();
+			let timers = 0;
+			this.loading = true;
+			this.discoveryTime = new Date().getTime();
+			this._startBleDiscovery();
+
+			Timer = setInterval(() => {
+				timers++;
+				if (new Date().getTime() - this.discoveryTime > this.loadingTime) {
+					ecBLE.stopBluetoothDevicesDiscovery();
+					this.loading = false;
+					clearInterval(Timer);
+				}
+				if (timers == 10 && this.getBleData.deviceList.length == 0) {
+					ecBLE.stopBluetoothDevicesDiscovery();
+					this._startBleDiscovery();
+				}
+				if (timers == 20 && this.getBleData.deviceList.length == 0) {
+					ecBLE.stopBluetoothDevicesDiscovery();
+					this._startBleDiscovery();
+				}
+				if (timers == 30 && this.getBleData.deviceList.length == 0) {
+					ecBLE.stopBluetoothDevicesDiscovery();
+					this._startBleDiscovery();
+				}
+				if (timers == 40 && this.getBleData.deviceList.length == 0) {
+					ecBLE.stopBluetoothDevicesDiscovery();
+					this._startBleDiscovery();
+				}
+				if (timers == 50 && this.getBleData.deviceList.length == 0) {
+					ecBLE.stopBluetoothDevicesDiscovery();
+					this._startBleDiscovery();
+				}
+			}, 500);
+		}),
+
+		handleStopDiscovery(click = false) {
+			if (click) {
+				uni.vibrateShort();
+			}
+			this.loading = false;
+			clearInterval(Timer);
+			ecBLE.stopBluetoothDevicesDiscovery();
+		},
+
+		handleConnect: throttle(async function (item, index, click = false) {
+			if (click) {
+				uni.vibrateShort();
+			}
+			this.handleStopDiscovery();
+
+			if (item.connected) {
+				await ecBLE.closeBLEConnection();
+				return;
+			}
+
+			if (!item.connected) {
+				this._createConnect(item, index);
+			}
+			this.currentIndex = index;
+		}),
+
+		_onConnectStateChange: debounce(function (res) {
+			console.log('=========蓝牙状态改变=======', res);
+
+			const { deviceId, connected } = res;
+
+			// 存储蓝牙数据
+			this.setBleData = {
+				...ecBLE.getBleData(), // 蓝牙连接数据
+				...this.getBleData // 全局存储数据
+			};
+			this.setBleData.connected = connected;
+			this.setBleData.deviceList = this.setBleData.deviceList.map((item) => {
+				if (item?.deviceId === deviceId) {
+					item.connected = connected;
+				}
+				return item;
+			});
+
+			if (this.connectLoading) {
+				// 处理连接状态
+				this.connectLoading = false;
+
+				if (!connected) {
+					Toast.fail('蓝牙连接失败');
+				} else {
+					Toast.success('蓝牙连接成功');
+				}
+			}
+
+			if (connected) {
+				this.showPopup = false;
+				this.setBleData.receiveDataValue = '';
+				this.myDeviceList = uniqBy([res, ...this.myDeviceList], 'deviceId');
+			}
+
+			this._keepBleHear(connected);
+
+			this.$emit('statusChange', !!connected);
+		}, 100),
+
+		_keepBleHear: debounce(function (connect = false) {
+			if (!connect) {
+				return ecBLE.easySendHeart('', true);
+			}
+
+			ecBLE.easySendHeart('8402ffff', true);
+
+			setTimeout(() => {
+				this._checkPassword();
+			}, 1000);
+
+			setTimeout(() => {
+				ecBLE.easySendHeart('8402ffff', true);
+			}, 2000);
+
+			setTimeout(() => {
+				this._checkPassword();
+			}, 3000);
+		}, 100),
+
+		_checkPassword() {
+			setTimeout(() => {
+				const pwStr = `830502ffffffff`;
+				ecBLE.easySendData(pwStr, true);
+			}, 100);
+		},
+
+		async _createConnect(item, index) {
+			let res = await this._connectFn(item, index);
+			if (!res?.connected) {
+				res = await this._connectFn(item, index);
+			}
+			console.log('=======连接反馈========', res);
+		},
+
+		_connectFn: throttle(function (item) {
+			if (!item.deviceId) return;
+			return new Promise((resolve) => {
+				this.connectLoading = true;
+				ecBLE.easyConnect(item, () => {
+					resolve(item);
+				});
+			});
+		}),
+		_checkMessage(strHex) {
+			const hexArr = hexStrToArr(strHex)
+				.slice(3, -1)
+				.map((s) => s.toUpperCase());
+			// console.log(hexArr);
+
+			/** 1003尾灯信息 **/
+			if (strHex.indexOf('2e1003') >= 0) {
+				const zoneDataB = this.$store.getters.zoneDataB;
+				const [data0, data1, data2] = hexArr;
+				const index1 = zoneDataB?.findIndex((item) => item.code === data0);
+				const index2 = zoneDataB?.[index1]?.children?.findIndex(
+					(item) => item.code === data1
+				);
+
+				if (index1 >= 0 && index2 >= 0) {
+					zoneDataB[index1].children[index2].value = data2;
+					this.$store.dispatch('setZoneDataB', zoneDataB);
+				}
+				console.log('1003分区信息', data0, data1, data2);
+				return;
+			}
+
+			/** 1102刹车信息 **/
+			if (strHex.indexOf('2e1102') >= 0) {
+				const turnLockMode = this.$store.getters.turnLockMode;
+				const [data0] = hexArr;
+				turnLockMode.value = data0;
+				this.$store.dispatch('setTurnLockMode', turnLockMode);
+				console.log('1102刹车信息', data0);
+				return;
+			}
+
+			/** 1202尾灯协议 **/
+			if (strHex.indexOf('2e1202') >= 0) {
+				const [data0] = hexArr;
+				const bleMcuData = this.$store.getters.bleMcuData;
+				bleMcuData.protocol = data0 === '01' ? '有协议' : '无协议';
+				this.$store.dispatch('setMcuData', bleMcuData);
+				console.log('1202尾灯协议', data0 === '01' ? '有协议' : '无协议');
+				return;
+			}
+
+			/** 15MCU版本信息 **/
+			if (strHex.indexOf('2e15') >= 0) {
+				const bleMcuData = this.$store.getters.bleMcuData;
+				bleMcuData.mcuVersion = hexToAscii(hexArr.join('')).trim();
+				this.$store.dispatch('setMcuData', bleMcuData);
+
+				console.log('15MCU版本信息', hexToAscii(hexArr.join('')));
+				return;
+			}
+
+			/** 1305密码信息 **/
+			if (strHex.indexOf('2e1305') >= 0) {
+				const [data0, data1, data2, data3, data4] = hexArr;
+				const passwordPassed = data1 === '01' ? '1' : '0'; // 0 初始密码未修改 1 密码校验通过
+
+				// 输入密码
+				if (data0 === '00') {
+					this.setBleData.ecUserPasswordPassed = passwordPassed;
+					if (passwordPassed === '0') {
+						Toast.fail('密码校验失败');
+					} else {
+						this.showPwPopup = false;
+						Toast.success('密码校验成功');
+					}
+					console.log('输入密码', data1, data2, data3, data4);
+				}
+
+				// 修改密码
+				if (data0 === '01') {
+					this.setBleData.ecUserPasswordPassed = passwordPassed;
+					if (passwordPassed === '0') {
+						Toast.fail('密码修改失败');
+					} else {
+						this.showPwPopup = false;
+						Toast.success('密码修改成功');
+					}
+					console.log('修改密码', data1, data2, data3, data4);
+				}
+
+				// 查询密码
+				if (data0 === '02') {
+					const password = [data1, data2, data3, data4]
+						.map((str) => str.substring(1))
+						.join('');
+					if (password?.length === 4) {
+						this.setBleData.ecUserPassword = password;
+					}
+					console.log('查询密码', data1, data2, data3, data4);
+				}
+
+				return;
+			}
+		},
+		_startBleDiscovery: debounce(async function () {
+			this.loading = true;
+
+			const res = await ecBLE.getBluetoothAdapterState();
+
+			if (res?.ok) {
+				this._discoveryFn();
+			} else {
+				const res = await ecBLE.initAdapter(() => {});
+				if (res.ok) {
+					this._discoveryFn();
+				} else {
+					this.loading = false;
+					this._showModal(
+						'授权失败',
+						'蓝牙或位置服务打开失败，您可以在小程序（右上角 - "..." - "设置"）中打开小程序的授权状态',
+						(res) => {
+							console.log(res);
+						}
+					);
+				}
+			}
+		}),
+
+		_discoveryFn() {
+			ecBLE.startBluetoothDevicesDiscovery(async (name, rssi, deviceId) => {
+				console.log('搜索到蓝牙', name, deviceId);
+				this.deviceList = uniqBy(
+					[...this.deviceList, { name, deviceId }],
+					'deviceId'
+				).filter((item) => item.name.indexOf('GM') >= 0);
+
+				this.setBleData.deviceList = uniqBy(
+					[...this.deviceList, { name, deviceId }],
+					'deviceId'
+				).filter((item) => item.name.indexOf('GM') >= 0);
+
+				this.myDeviceList = this.$store.getters.myBleList.map((item) => {
+					item.connected = false;
+					return item;
+				});
+
+				this.myDeviceList.forEach((item) => {
+					if (item?.deviceId === deviceId && !this.getBleData.connected) {
+						this.handleStopDiscovery();
+						this._connectFn(item);
+					}
+				});
+
+				this.deviceList.forEach((item) => {
+					if (item?.name.indexOf('GM') >= 0 && !this.getBleData.connected) {
+						this.handleStopDiscovery();
+						this._connectFn(item);
+					}
+				});
+			});
+		},
+
+		_showModal(title, content) {
+			uni.showModal({
+				title: title,
+				content: content,
+				showCancel: false
+			});
+		},
+		_getStrFirst(str) {
+			return str.slice(0, 1);
+		}
+	}
+};
+</script>
+
+<style lang="scss" scoped>
+.ble_status_wrap {
+	padding: 10rpx 0 30rpx;
+	.ble_status_top {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 5rpx 0;
+		.ble_status_left {
+			color: $uni-text-highlight-color;
+		}
+		.ble_status_right {
+			display: flex;
+			align-items: center;
+			opacity: 0.7;
+			&.is_connected {
+				opacity: 1;
+				color: $uni-text-highlight-color;
+			}
+			image {
+				width: 40rpx;
+				height: 40rpx;
+				margin-right: 10rpx;
+			}
+		}
+	}
+
+	::v-deep .van-popup {
+		width: 90%;
+		padding: 30rpx 20rpx;
+		background: #14182a;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		box-shadow: 0 0 5px rgba(0, 0, 0, 0.7);
+		border-radius: 30rpx;
+	}
+	.ble_list_popup {
+		width: 100%;
+		height: 660rpx;
+		padding: 0 0 20rpx;
+		box-sizing: border-box;
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		align-items: center;
+		.ble_list {
+			width: 100%;
+			padding: 0 20rpx;
+			flex-grow: 1;
+			overflow-x: hidden;
+			overflow-y: auto;
+			.list_item {
+				height: 70rpx;
+				display: flex;
+				justify-content: space-between;
+				align-items: center;
+				padding: 20rpx 0;
+				margin: 0 10rpx;
+				position: relative;
+				&:active {
+					opacity: 0.5;
+				}
+				.list_item_left {
+					display: flex;
+					align-items: center;
+					.list_item-img {
+						width: 36rpx;
+						height: 36rpx;
+						flex-shrink: 0;
+					}
+
+					.list_item-name {
+						flex-grow: 1;
+						font-size: 32rpx;
+						margin: 0 20rpx;
+					}
+				}
+
+				.list_item_right {
+				}
+			}
+			.search_loading {
+				position: absolute;
+				left: 0;
+				top: 0;
+				width: 100%;
+				height: 90%;
+				display: flex;
+				flex-direction: column;
+				align-items: center;
+				justify-content: center;
+				pointer-events: none;
+				text {
+					margin-top: 15rpx;
+				}
+			}
+			.ble_tips {
+				position: absolute;
+				left: 0;
+				top: 0;
+				width: 100%;
+				height: 90%;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				pointer-events: none;
+			}
+		}
+		.ble_list_tip {
+			margin-top: 20rpx;
+			font-size: 12px;
+		}
+	}
+
+	.password_popup {
+		padding: 20rpx;
+		width: 100%;
+		flex-grow: 1;
+		display: flex;
+		flex-direction: column;
+		justify-content: center;
+		align-items: center;
+		.password_title {
+			color: rgba(#fff, 0.9);
+			text-align: center;
+		}
+		.password_input {
+			width: 60%;
+			margin: 60px 0 30px;
+
+			::v-deep .van-cell {
+				background: rgba(0, 0, 0, 0);
+				&:after {
+					border-color: rgba($uni-text-color, 0.7);
+				}
+			}
+			::v-deep .van-field__control {
+				font-size: 20px;
+				text-align: center;
+				color: $uni-text-color;
+			}
+		}
+		.password_footer {
+			width: 100%;
+			display: flex;
+			justify-content: space-around;
+			align-items: center;
+			.contact_button {
+				width: 45%;
+				padding: 6rpx;
+				background: url('/static/images/button_bg.png') no-repeat;
+				background-size: 100% 100%;
+				position: relative;
+				.contact_button_inner {
+					width: 100%;
+					height: 100%;
+					//background: #283f5f;
+					border-radius: 100px;
+					display: flex;
+					justify-content: center;
+					align-items: center;
+				}
+				&.contact_button_info {
+					background: #283f5f;
+				}
+			}
+		}
+	}
+
+	.contact_button {
+		width: 420rpx;
+		height: 70rpx;
+		overflow: hidden;
+		flex-shrink: 0;
+		line-height: 70rpx;
+		margin-top: 20rpx;
+		color: #fff;
+		font-size: 14px;
+		border-radius: 300px;
+		background: url('/static/images/sing_btn.png') no-repeat;
+		background-size: 100% 100%;
+		border: none;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+		transition: all 0.1s;
+		&:active {
+			opacity: 0.4;
+		}
+		::v-deep .van-count-down {
+			color: #fff;
+			margin-left: 10rpx;
+		}
+	}
+}
+</style>

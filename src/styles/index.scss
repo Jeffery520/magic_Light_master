@@ -1,0 +1,86 @@
+page,
+view,
+text,
+swiper,
+swiper-item,
+image,
+navigator {
+	padding: 0;
+	margin: 0;
+	box-sizing: border-box;
+	font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica,
+	Segoe UI, Arial, Roboto, 'PingFang SC', 'miui', 'Hiragino Sans GB', 'Microsoft Yahei',
+	sans-serif;
+	// 处理数字、纯英文不换行的问题，强制换行
+	word-wrap: break-word;
+	word-break: break-word;
+	white-space: normal;
+}
+
+page {
+	/* 定义统一字体大小 */
+	font-size: 28rpx;
+	color: $uni-text-color;
+	background: $page-background-color;
+}
+
+.flex-c-c {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+}
+
+.flex-1 {
+	flex: 1;
+}
+
+
+
+van-tabbar {
+	.van-tabbar-item__icon {
+		margin-bottom: -1px !important;
+	}
+}
+
+// 统一换行
+  .text-wap {
+	  word-wrap: break-word;
+	  word-break: break-word;
+	  white-space: normal;
+  }
+
+// 文本溢出隐藏不换行
+.text-overflow {
+	word-wrap: break-word;
+	word-break: break-word;
+	white-space: normal;
+	overflow: hidden; //超出的文本隐藏
+	text-overflow: ellipsis !important; //溢出用省略号显示
+	white-space: nowrap; //溢出不换行
+}
+
+// 文本超过1行，溢出隐藏
+.text-overflow1 {
+	word-wrap: break-word;
+	word-break: break-word;
+	white-space: normal;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 1;
+}
+
+// 文本超过2行，溢出隐藏
+.text-overflow2 {
+	word-wrap: break-word;
+	word-break: break-word;
+	white-space: normal;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	display: -webkit-box;
+	-webkit-box-orient: vertical;
+	-webkit-line-clamp: 2;
+}
+
+
