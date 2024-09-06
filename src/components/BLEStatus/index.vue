@@ -74,11 +74,11 @@
 				</view>
 			</view>
 		</van-popup>
-		<!--    密码输入弹窗-->
+		<!--密码输入弹窗-->
 		<van-popup :show="showPwPopup" :close-on-click-overlay="false">
 			<view class="password_popup">
 				<view class="password_title">
-					<text v-if="passwordType === '0'"
+					<text v-if="passwordType === '1'"
 						>您的密码为初始密码，建议您修改</text
 					>
 					<text v-else>请输入蓝牙密码</text>
@@ -100,11 +100,11 @@
 						plain
 						@click="handlePwClose"
 					>
-						取消
+						{{ passwordType === '1' ? '取消修改' : '取消' }}
 					</view>
 					<view class="contact_button" plain @click="handleSendPw">
 						<view class="contact_button_inner">
-							{{ passwordType === '0' ? '修改' : '确认' }}
+							{{ passwordType === '1' ? '确认修改' : '确认' }}
 						</view>
 					</view>
 				</view>
@@ -117,7 +117,8 @@
 import ecBLE from '@/utils/ecBLE';
 import Toast from '@/wxcomponents/vant-weapp/toast/toast';
 import { debounce, throttle, uniqBy } from '@/utils/lodash.min';
-import { hexStrToArr, hexToAscii } from '@/utils/format';
+import { hexStrToArr, hexToAscii, hexToNumber } from '@/utils/format';
+import util from '@/components/ColorPicker/util.js';
 
 let Timer = null;
 
@@ -145,6 +146,11 @@ export default {
 			discoveryTime: new Date().getTime(),
 			currentIndex: -1,
 			password: '',
+			passwordType: '0',
+			sendData: {
+				sendTime: 0,
+				sendMsg: {}
+			},
 			setBleData: {},
 			deviceList: [],
 			myDeviceList: []
@@ -154,10 +160,8 @@ export default {
 		getBleData() {
 			return this.$store.getters.bleData;
 		},
-		passwordType() {
-			// 0 需要修改密码 1 需要验证密码
-			if (this.setBleData.ecUserPassword !== '0000') return '1';
-			return '0';
+		needChangePw() {
+			return this.setBleData.ecUserPassword === '0000';
 		},
 		connected() {
 			return this.getBleData.connected;
@@ -231,9 +235,13 @@ export default {
 			}
 		});
 
-		uni.$on('receiveMsg', ({ strHex, receiveDataValue }) => {
+		uni.$on('onSendMsg', (res) => {
+			this.sendData = res;
+		});
+
+		uni.$on('receiveMsg', ({ aHexStr, qHexArr, disTime, receiveDataValue }) => {
 			this.setBleData.receiveDataValue = receiveDataValue;
-			this._checkMessage(strHex);
+			this._checkMessage(aHexStr, qHexArr, disTime);
 		});
 	},
 	beforeDestroy() {
@@ -290,7 +298,8 @@ export default {
 		},
 		handlePwClose() {
 			uni.vibrateShort();
-			if (this.passwordType === '0') {
+			if (this.passwordType === '1') {
+				this.passwordType = '0';
 				this.setBleData.ecUserPasswordPassed = '1';
 			}
 			this.password = '';
@@ -308,24 +317,21 @@ export default {
 				return Toast('蓝牙已断开');
 			}
 
-			if (this.passwordType === '1') {
+			if (this.passwordType === '0') {
 				this.setBleData.ecUserPasswordPassed =
-					this.getBleData.ecUserPassword === this.password.trim() ? '1' : '0';
+					this.password.trim() === this.setBleData.ecUserPassword ? '1' : '0';
 				if (this.setBleData.ecUserPasswordPassed === '1') {
-					this.showPwPopup = false;
+					if (this.needChangePw) {
+						this.passwordType = '1';
+					} else {
+						this.showPwPopup = false;
+					}
 					Toast.success('密码校验成功');
 				} else {
 					Toast.success('密码错误');
 				}
 			} else {
-				const arr = this.password.split('').map((s) => '0' + s);
-				const pwStr = `830501${arr.join('')}`;
-				setTimeout(() => {
-					ecBLE.easySendData(pwStr, true);
-				}, 100);
-				setTimeout(() => {
-					ecBLE.easySendData(pwStr, true);
-				}, 1000);
+				this._changePassword(this.password.trim());
 			}
 		},
 		handleDiscovery: debounce(function (click = false) {
@@ -393,6 +399,17 @@ export default {
 			}
 			this.currentIndex = index;
 		}),
+
+		_changePassword(password) {
+			this.isSendPassword = true;
+
+			setTimeout(() => {
+				this._easySendData(password, true);
+			}, 100);
+			setTimeout(() => {
+				this._easySendData(password, true);
+			}, 1000);
+		},
 
 		_onConnectStateChange: debounce(function (res) {
 			console.log('=========蓝牙状态改变=======', res);
@@ -478,79 +495,177 @@ export default {
 				});
 			});
 		}),
-		_checkMessage(strHex) {
-			const hexArr = hexStrToArr(strHex)
-				.slice(3, -1)
-				.map((s) => s.toUpperCase());
-			// console.log(hexArr);
+		_checkMessage(aHexStr, qHexArr, disTime) {
+			const qHexArr2 = (qHexArr || []).map((s) => s.toUpperCase());
 
-			/** 1003尾灯信息 **/
-			if (strHex.indexOf('2e1003') >= 0) {
-				const zoneDataB = this.$store.getters.zoneDataB;
-				const [data0, data1, data2] = hexArr;
-				const index1 = zoneDataB?.findIndex((item) => item.code === data0);
-				const index2 = zoneDataB?.[index1]?.children?.findIndex(
-					(item) => item.code === data1
-				);
+			const hexArr = hexStrToArr(aHexStr)
+				.map((s) => s.toUpperCase())
+				.slice(3, -1);
 
-				if (index1 >= 0 && index2 >= 0) {
-					zoneDataB[index1].children[index2].value = data2;
-					this.$store.dispatch('setZoneDataB', zoneDataB);
+			const [data0, data1, data2, data3, data4, data5] = hexArr;
+
+			const zoneData = {
+				data0,
+				data1,
+				data2,
+				data3,
+				data4,
+				data5
+			};
+
+			const { sendTime, sendMsg } = this.sendData || {};
+
+			const sendMsgKeys = Object.keys(sendMsg || {}).filter((key) =>
+				Object.keys(zoneData).includes(key)
+			);
+
+			const isSuccess =
+				sendMsgKeys?.length &&
+				sendMsgKeys.every((key) => {
+					return sendMsg[key] === zoneData[key];
+				});
+
+			const isFailed =
+				sendMsgKeys?.length &&
+				sendMsgKeys.some((key) => {
+					return sendMsg[key] !== zoneData[key];
+				});
+
+			console.log('=======收到消息======', aHexStr, hexArr, sendMsgKeys);
+
+			// 指令设置成功
+			if (isSuccess) {
+				uni.$emit('setCallback', { status: 1, data: zoneData });
+			}
+
+			// sendTime 为空说明未发送指令
+			// sendTime 距离发送指令时间超过600m秒，说明指令已超时
+			if (
+				!sendTime ||
+				sendTime < 0 ||
+				(sendTime && new Date().getTime() - sendTime > 600) ||
+				isFailed
+			) {
+				// 指令设置失败
+				Toast('设置失败');
+				uni.$emit('setCallback', { status: 0, data: zoneData });
+			}
+
+			/** 1606 氛围灯信息 **/
+			if (aHexStr.indexOf('2e1606') >= 0) {
+				const zoneDataA = this.$store.getters.zoneDataA;
+
+				const target = zoneDataA.find((item) => item.code === data0);
+
+				// 模式设置数据
+				if (data1 === '01') {
+					target.mode = data2;
+
+					// 情景模式、人群模式、心情模式
+					if (['01', '02', '04'].includes(data2)) {
+						target.mode2 = data3;
+					}
+
+					// 单色模式
+					if (data1 === '00') {
+						target.value4 = util.hslToRgb(`${data3}${data4}${data5}`).join(',');
+					}
+
+					// 天气模式
+					if (data2 === '03') {
+						target.weather = {
+							name: '晴天',
+							temperature: hexToNumber(data3),
+							humidity: hexToNumber(data4)
+						};
+					}
+					// 爆闪模式
+					if (data1 === '05') {
+						target.value5 = hexToNumber(data3);
+					}
 				}
-				console.log('1003分区信息', data0, data1, data2);
+
+				// 参数设置数据
+				if (data1 === '00') {
+					target.value1 = hexToNumber(data2); // 灯光数量
+					target.value2 = hexToNumber(data3); // 亮度
+					target.value3 = hexToNumber(data4); // 呼吸节奏
+				}
+
+				const newZoneDataA = zoneDataA.map((item) => {
+					if (item.code === data0) {
+						return target;
+					}
+					return item;
+				});
+
+				this.$store.dispatch('setZoneDataA', newZoneDataA);
+
+				console.log(
+					'1606 氛围灯信息',
+					data0,
+					data1,
+					data2,
+					data3,
+					data4,
+					data5
+				);
 				return;
 			}
 
-			/** 1102刹车信息 **/
-			if (strHex.indexOf('2e1102') >= 0) {
-				const turnLockMode = this.$store.getters.turnLockMode;
-				const [data0] = hexArr;
-				turnLockMode.value = data0;
-				this.$store.dispatch('setTurnLockMode', turnLockMode);
-				console.log('1102刹车信息', data0);
+			/** 1703 氛围灯关联信息 **/
+			if (aHexStr.indexOf('2e1703') >= 0) {
+				const zoneDataA = this.$store.getters.zoneDataA;
+				const [data0, data1, data2] = hexArr;
+
+				const target = zoneDataA
+					.find((item) => item.code === data0)
+					.map((item) => {
+						if (item.code === data1) {
+							item.value = data2;
+						}
+					});
+
+				const newZoneDataA = zoneDataA.map((item) => {
+					if (item.code === data0) {
+						return target;
+					}
+					return item;
+				});
+
+				this.$store.dispatch('setZoneDataA', newZoneDataA);
+
+				console.log('1703 氛围灯关联信息', data0, data1, data2);
 				return;
 			}
 
-			/** 1202尾灯协议 **/
-			if (strHex.indexOf('2e1202') >= 0) {
+			/** 1202 灯控协议 **/
+			if (aHexStr.indexOf('2e1202') >= 0) {
 				const [data0] = hexArr;
 				const bleMcuData = this.$store.getters.bleMcuData;
 				bleMcuData.protocol = data0 === '01' ? '有协议' : '无协议';
 				this.$store.dispatch('setMcuData', bleMcuData);
-				console.log('1202尾灯协议', data0 === '01' ? '有协议' : '无协议');
+				console.log('1202 灯控协议', data0 === '01' ? '有协议' : '无协议');
 				return;
 			}
 
-			/** 15MCU版本信息 **/
-			if (strHex.indexOf('2e15') >= 0) {
+			/** 15MCU 版本信息 **/
+			if (aHexStr.indexOf('2e15') >= 0) {
 				const bleMcuData = this.$store.getters.bleMcuData;
 				bleMcuData.mcuVersion = hexToAscii(hexArr.join('')).trim();
 				this.$store.dispatch('setMcuData', bleMcuData);
-
 				console.log('15MCU版本信息', hexToAscii(hexArr.join('')));
 				return;
 			}
 
-			/** 1305密码信息 **/
-			if (strHex.indexOf('2e1305') >= 0) {
+			/** 1305 密码反馈信息 **/
+			if (aHexStr.indexOf('2e1305') >= 0) {
+				// 密码弹窗打开 && 正在修改密码
 				const [data0, data1, data2, data3, data4] = hexArr;
 				const passwordPassed = data1 === '01' ? '1' : '0'; // 0 初始密码未修改 1 密码校验通过
 
-				// 输入密码
-				if (data0 === '00') {
-					this.setBleData.ecUserPasswordPassed = passwordPassed;
-					if (passwordPassed === '0') {
-						Toast.fail('密码校验失败');
-					} else {
-						this.showPwPopup = false;
-						Toast.success('密码校验成功');
-					}
-					console.log('输入密码', data1, data2, data3, data4);
-				}
-
 				// 修改密码
-				if (data0 === '01') {
-					this.setBleData.ecUserPasswordPassed = passwordPassed;
+				if (data0 === '01' && this.isSendPassword) {
 					if (passwordPassed === '0') {
 						Toast.fail('密码修改失败');
 					} else {

@@ -15,7 +15,7 @@ const zoneDataA = [
 		value1: '50', // 灯光数量
 		value2: '10', // 亮度
 		value3: '00', // 呼吸节奏
-		value4: 'FF,FF,FF', // 颜色
+		value4: '255,255,255', // 颜色
 		value5: 100, // 爆闪节奏
 		weather: {
 			name: '晴天',
@@ -62,7 +62,7 @@ const zoneDataA = [
 		value1: '50', // 灯光数量
 		value2: '10', // 亮度
 		value3: '00', // 呼吸节奏
-		value4: 'FF,FF,FF', // 颜色
+		value4: '255,255,255', // 颜色
 		value5: 100, // 爆闪节奏
 		weather: {
 			name: '晴天',
@@ -109,7 +109,7 @@ const zoneDataA = [
 		value1: '50', // 灯光数量
 		value2: '10', // 亮度
 		value3: '00', // 呼吸节奏
-		value4: 'FF,FF,FF', // 颜色
+		value4: '255,255,255', // 颜色
 		value5: 100, // 爆闪节奏
 		weather: {
 			name: '晴天',
@@ -222,127 +222,13 @@ const zoneKeysDataA = {
 	'0B': '爆闪3次渐灭'
 };
 
-/** -------------------尾灯数据------------------- **/
-/** 蓝牙设置数据 **/
-const zoneDataB = [
-	{
-		code: '00',
-		name: '尾灯显模式 —— 分区1',
-		children: [
-			{
-				code: '00',
-				name: '启动',
-				value: '01',
-				keys: ['01', '02']
-			},
-			{
-				code: '01',
-				name: '行车',
-				value: '03',
-				keys: ['03', '04', '05', '06', '07']
-			},
-			{
-				code: '04',
-				name: '转向',
-				value: '00',
-				keys: ['00', '0A', '04', '05']
-			},
-			{
-				code: '02',
-				name: '刹车',
-				value: '08',
-				keys: ['08', '09', '0A', '0B']
-			}
-		]
-	},
-	{
-		code: '02',
-		name: '转向灯显模式 —— 分区2',
-		children: [
-			{
-				code: '00',
-				name: '启动',
-				value: '01',
-				keys: ['01', '02']
-			},
-			{
-				code: '01',
-				name: '行车',
-				value: '00',
-				keys: ['00', '03', '04', '05']
-			},
-			{
-				code: '04',
-				name: '转向',
-				value: '00',
-				keys: ['00', '0A']
-			},
-			{
-				code: '02',
-				name: '刹车',
-				value: '08',
-				keys: ['08', '09', '0A', '0B']
-			}
-		]
-	},
-	{
-		code: '01',
-		name: '飞机灯显模式 —— 分区3',
-		children: [
-			{
-				code: '00',
-				name: '启动',
-				value: '01',
-				keys: ['01', '02']
-			},
-			{
-				code: '01',
-				name: '行车',
-				value: '03',
-				keys: ['03', '04', '05', '06', '07']
-			},
-			{
-				code: '04',
-				name: '转向',
-				value: '00',
-				keys: ['00', '0A', '04', '05']
-			},
-			{
-				code: '02',
-				name: '刹车',
-				value: '08',
-				keys: ['08', '09', '0A', '0B']
-			}
-		]
-	}
-];
-/** 信号关联模式 **/
-const zoneKeysDataB = {
-	'00': '无模式',
-	'01': '爆闪1次渐亮',
-	'02': '爆闪3次渐亮',
-	'03': '呼吸',
-	'04': '领航闪',
-	'05': '啪啪闪',
-	'06': '常亮',
-	'07': '模式循环',
-	'08': '爆闪3次后高亮',
-	'09': '爆闪5次后高亮',
-	'0A': '连续爆闪',
-	'0B': '高亮',
-	'0C': '爆闪1次渐灭',
-	'0D': '爆闪3次渐灭'
-};
-
 const store = new Vuex.Store({
 	state: {
 		bleData: {},
 		myBleList: [],
 		zoneDataA: zoneDataA,
-		zoneDataB: zoneDataB,
 		zoneModesA: zoneModesA,
 		zoneKeysDataA: zoneKeysDataA,
-		zoneKeysDataB: zoneKeysDataB,
 		turnLockMode: {
 			code: '81',
 			name: '刹车模式',
@@ -370,11 +256,45 @@ const store = new Vuex.Store({
 		SET_ZONE_DATA_A(state, data) {
 			state.zoneDataA = data;
 		},
-		SET_ZONE_DATA_B(state, data) {
-			state.zoneDataB = data;
-		},
 		SET_LOCK_MODE(state, data) {
 			state.turnLockMode = data;
+		},
+		SET_BLE_MSG_QUEUE(state, data) {
+			state.bleMsgQueue = data;
+		},
+		ADD_BLE_MSG_QUEUE(state, data) {
+			state.bleMsgQueue.push(data);
+		},
+		CLEAR_BLE_MSG_QUEUE(state) {
+			state.bleMsgQueue = [];
+		},
+		SET_BLE_MSG_QUEUE_WAIT(state, data) {
+			state.bleMsgQueueWait = data.slice(0, 25);
+		},
+		CLEAR_BLE_MSG_QUEUE_WAIT(state) {
+			state.bleMsgQueueWait = [];
+		},
+		CLEAR_STATE(state) {
+			state.bleData = {};
+			state.myBleList = [];
+			state.bleMsgQueueWait = [];
+			state.bleMsgQueue = [];
+			state.zoneDataA = zoneDataA;
+			state.zoneModesA = zoneModesA;
+			state.zoneKeysDataA = zoneKeysDataA;
+			state.turnLockMode = {
+				code: '81',
+				name: '刹车模式',
+				value: '00',
+				keys: [
+					{ code: '00', name: '低刹' },
+					{ code: '01', name: '高刹' }
+				]
+			};
+			state.bleMcuData = {
+				protocol: '',
+				mcuVersion: ''
+			};
 		}
 	},
 	actions: {
@@ -390,23 +310,29 @@ const store = new Vuex.Store({
 		setZoneDataA({ commit }, data) {
 			commit('SET_ZONE_DATA_A', data);
 		},
-		setZoneDataB({ commit }, data) {
-			commit('SET_ZONE_DATA_B', data);
-		},
 		setTurnLockMode({ commit }, data) {
 			commit('SET_LOCK_MODE', data);
+		},
+		setBleMsgQueue({ commit }, data) {
+			commit('SET_BLE_MSG_QUEUE', data);
+		},
+		addBleMsgQueue({ commit }, data) {
+			commit('ADD_BLE_MSG_QUEUE', data);
+		},
+		clearBleMsgQueue({ commit }) {
+			commit('CLEAR_BLE_MSG_QUEUE');
+		},
+		setBleMsgQueueWait({ commit }, data) {
+			commit('SET_BLE_MSG_QUEUE_WAIT', data);
+		},
+		clearBleMsgQueueWait({ commit }) {
+			commit('CLEAR_BLE_MSG_QUEUE_WAIT');
+		},
+		clearState({ commit }) {
+			commit('CLEAR_STATE');
 		}
 	},
 	getters: {
-		zoneModesA: () => {
-			return zoneModesA;
-		},
-		zoneKeysDataA: () => {
-			return zoneKeysDataA;
-		},
-		zoneKeysDataB: () => {
-			return zoneKeysDataB;
-		},
 		bleData: (state) => {
 			return state.bleData;
 		},
@@ -416,14 +342,23 @@ const store = new Vuex.Store({
 		zoneDataA: (state) => {
 			return state.zoneDataA;
 		},
-		zoneDataB: (state) => {
-			return state.zoneDataB;
+		zoneModesA: () => {
+			return zoneModesA;
+		},
+		zoneKeysDataA: () => {
+			return zoneKeysDataA;
 		},
 		turnLockMode: (state) => {
 			return state.turnLockMode;
 		},
 		bleMcuData: (state) => {
 			return state.bleMcuData;
+		},
+		bleMsgQueue: (state) => {
+			return state.bleMsgQueue;
+		},
+		bleMsgQueueWait: (state) => {
+			return state.bleMsgQueueWait;
 		}
 	},
 	plugins: [

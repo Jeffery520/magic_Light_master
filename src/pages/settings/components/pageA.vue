@@ -1,5 +1,5 @@
 <template>
-	<view v-if="zoneDataA[zoneIndex]" class="page_module_wrap">
+	<view v-if="setZoneData" class="page_module_wrap">
 		<view class="parts_tabs_wrap">
 			<view
 				v-for="(item, index) in zoneDataA"
@@ -23,23 +23,16 @@
 			>
 		</view>
 
-		单色模式
-		<view
-			v-if="currentModel == '00' && zoneDataA[zoneIndex]"
-			class="mode_color_wrap"
-		>
+		<view v-if="currentModel == '00' && setZoneData" class="mode_color_wrap">
 			<color-picker
-				:currentColor="_getColorRgb(zoneDataA[zoneIndex].value4)"
+				:modelValue="_getColorRgb(setZoneData.value4)"
 				@change="colorChange"
 			/>
 		</view>
 
 		<!-- 天气模式-->
 		<view v-if="['03'].includes(currentModel)" class="mode_color_wrap">
-			<WeatherTool
-				:weather="zoneDataA[zoneIndex].weather"
-				@change="weatherChange"
-			/>
+			<WeatherTool :weather="setZoneData.weather" @change="weatherChange" />
 		</view>
 
 		<!-- 爆闪模式-->
@@ -50,21 +43,21 @@
 					<text class="slider_left">慢</text>
 
 					<van-slider-custom
-						:value="zoneDataA[zoneIndex].value5"
+						v-model="setZoneData.value5"
 						:max="100"
 						:step="10"
 						use-button-slot
 						bar-height="22px"
 						active-color="#722cb2"
 						custom-class="custom_slider"
-						@drag="flashRhythmDrag"
-						@change="flashRhythmChange"
+						@drag="onSliderDrag($event, 'value5')"
+						@change="flashRhythmChange($event, 'value5')"
 					>
 						<view
 							class="custom_slider_button"
 							:class="{
-								is_start: zoneDataA[zoneIndex].value5 <= 10,
-								is_end: zoneDataA[zoneIndex].value5 >= 90
+								is_start: setZoneData.value5 <= 10,
+								is_end: setZoneData.value5 >= 90
 							}"
 							slot="button"
 							:style="{
@@ -74,11 +67,11 @@
 							<view
 								class="custom_slider_button_inner"
 								:style="{
-									transform: `translate(-${zoneDataA[zoneIndex].value5}%,-50%)`
+									transform: `translate(-${setZoneData.value5}%,-50%)`
 								}"
 							>
 								<view class="slider_value">
-									{{ zoneDataA[zoneIndex].value5 }} <text>%</text>
+									{{ setZoneData.value5 }} <text>%</text>
 								</view>
 							</view>
 						</view>
@@ -94,14 +87,14 @@
 			class="mode_list_wrap"
 		>
 			<van-radio-group
-				v-model="zoneDataA[zoneIndex].mode2"
+				v-model="setZoneData.mode2"
 				placement="row"
 				@change="model2Change"
 				activeColor="#07C160"
 				inactiveColor="#464849"
 			>
 				<van-radio
-					v-for="(item, index) in currentZone.options"
+					v-for="(item, index) in zoneMode.options"
 					:key="index"
 					:name="index"
 					use-icon-slot
@@ -109,7 +102,7 @@
 					<image
 						slot="icon"
 						mode="aspectFit"
-						:src="currentZone.mode2 === item.code ? radioIcon2 : radioIcon1"
+						:src="setZoneData.mode2 === item.code ? radioIcon2 : radioIcon1"
 					/>
 					<view class="radio_label">{{ item.name }}</view>
 				</van-radio>
@@ -122,12 +115,14 @@
 				<view class="form_item_content">
 					<text class="slider_left">0</text>
 					<van-slider
-						:value="zoneDataA[zoneIndex].value1"
+						:value="setZoneData.value1"
 						:max="100"
 						use-button-slot
 						bar-height="8px"
 						active-color="#19c5c9"
+						inactive-color="rgba(0, 0, 0, 0.2)"
 						custom-class="custom_slider"
+						@drag="onSliderDrag($event, 'value1')"
 						@change="lightNumChange"
 					>
 						<view
@@ -138,7 +133,7 @@
 							}"
 						></view>
 					</van-slider>
-					<text class="slider_right">100</text>
+					<text class="slider_right">{{ setZoneData.value1 }}</text>
 				</view>
 			</view>
 			<view class="form_item">
@@ -146,12 +141,14 @@
 				<view class="form_item_content">
 					<text class="slider_left">0</text>
 					<van-slider
-						:value="zoneDataA[zoneIndex].value2"
+						:value="setZoneData.value2"
 						:max="10"
 						use-button-slot
 						bar-height="8px"
 						active-color="#19c5c9"
+						inactive-color="rgba(0, 0, 0, 0.2)"
 						custom-class="custom_slider"
+						@drag="onSliderDrag($event, 'value2')"
 						@change="lightChange"
 					>
 						<view
@@ -162,7 +159,7 @@
 							}"
 						></view>
 					</van-slider>
-					<text class="slider_right">10</text>
+					<text class="slider_right">{{ setZoneData.value2 }}</text>
 				</view>
 			</view>
 			<view class="form_item">
@@ -170,12 +167,14 @@
 				<view class="form_item_content">
 					<text class="slider_left">慢</text>
 					<van-slider
-						:value="zoneDataA[zoneIndex].value3"
+						:value="setZoneData.value3"
 						:max="10"
 						use-button-slot
 						bar-height="8px"
 						active-color="#19c5c9"
+						inactive-color="rgba(0, 0, 0, 0.2)"
 						custom-class="custom_slider"
+						@drag="onSliderDrag($event, 'value3')"
 						@change="rhythmChange"
 					>
 						<view
@@ -193,7 +192,7 @@
 				<text class="form_item_label">信号关联</text>
 				<view class="form_item_content">
 					<view
-						v-for="(mode, index2) in zoneDataA[zoneIndex].signal"
+						v-for="(mode, index2) in setZoneData.signal"
 						:key="index2"
 						class="state_item"
 					>
@@ -270,6 +269,7 @@ export default {
 			radioIcon2,
 			zoneDataA: [],
 			zoneIndex: 0,
+			setZoneData: {},
 			currentModel: '00'
 		};
 	},
@@ -286,7 +286,7 @@ export default {
 		zoneKeysDataA() {
 			return this.$store.getters.zoneKeysDataA;
 		},
-		currentZone() {
+		zoneMode() {
 			const target = this.zoneModesA.find(
 				(item) => item.code == this.currentModel
 			);
@@ -295,157 +295,220 @@ export default {
 	},
 	mounted() {
 		this.zoneDataA = this.$store.getters.zoneDataA;
+		this.setZoneData = this.zoneDataA[this.zoneIndex];
 	},
 	methods: {
 		// 分区切换
 		zoneIndexChange(index) {
 			uni.vibrateShort();
-			console.log('zoneIndexChange', index);
-			console.log(this.zoneDataA[index]);
 			this.zoneIndex = index;
+			this.currentModel = this.zoneDataA[index].mode;
+			this.setZoneData = this.zoneDataA[index];
 		},
 		// 模式切换
 		modelChange(code) {
 			uni.vibrateShort();
+
 			this.currentModel = code;
+			this.setZoneData.mode = code;
+			if (['01', '02', '04'].includes(code)) {
+				this.setZoneData.mode2 = '00';
+			}
+
+			this._sendModelMode();
 		},
 		onSignalChange(event, index) {
 			uni.vibrateShort();
 
 			// 发送设置
-			const value = event.detail;
-			const code1 = this.zoneDataA[this.zoneIndex].code;
-			const code2 = this.zoneDataA[this.zoneIndex].signal[index].code;
+			const data2 = event.detail;
+			const data0 = this.setZoneData.code;
+			const data1 = this.setZoneData.signal[index].code;
 
-			this._sendSettings(`8703${code1}${code2}${value}`, () => {
-				this.$set(this.zoneDataA[this.zoneIndex].signal[index], 'value', value);
-				this.$store.dispatch('setZoneDataA', this.zoneDataA);
+			const signal = this.setZoneData.signal;
+			signal[index].value = data2;
+
+			this.setZoneData = {
+				...this.setZoneData,
+				signal: signal
+			};
+
+			const msg = `8703${data0}${data1}${data2}`;
+
+			this._checkBleState(() => {
+				this._easySendData(msg, true, {
+					data0,
+					data1,
+					data2
+				});
 			});
 		},
-		// 爆闪模式
-		flashRhythmDrag(event) {
+		onSliderDrag(event, code) {
 			uni.vibrateShort();
-			this.zoneDataA[this.zoneIndex].value5 = event.detail.value;
+			const value = event.detail.value;
+
+			this.setZoneData = {
+				...this.setZoneData,
+				[code]: value
+			};
 		},
 		// 模式设置
 		model2Change(event) {
 			uni.vibrateShort();
-			this.zoneDataA[this.zoneIndex].mode2 = event.detail;
+			this.setZoneData.mode2 = event.detail;
 			this._sendModelMode();
 		},
 		// 单色模式
 		colorChange(data) {
 			uni.vibrateShort();
 			const { red, green, blue } = data;
-			this.zoneDataA[this.zoneIndex].value4 = `${red},${green},${blue}`;
+			this.setZoneData.value4 = `${red},${green},${blue}`;
 			this._sendModelColor();
 		},
 		// 天气模式
 		weatherChange(data) {
 			uni.vibrateShort();
-			this.zoneDataA[this.zoneIndex].weather = data;
+			this.setZoneData.weather = data;
 			this._sendModelWeather();
 		},
 		// 爆闪模式
-		flashRhythmChange(event) {
+		flashRhythmChange(event, code) {
 			uni.vibrateShort();
-			this.zoneDataA[this.zoneIndex].value5 = event.detail;
+			const value = event.detail;
+
+			this.setZoneData = {
+				...this.setZoneData,
+				[code]: value
+			};
+
 			this._sendModelRhythm();
 		},
 		// 灯珠个数
 		lightNumChange(event) {
 			uni.vibrateShort();
-			this.zoneDataA[this.zoneIndex].value1 = event.detail;
+			this.setZoneData.value1 = event.detail;
 			this._sendModelParams();
 		},
 		// 亮度
 		lightChange(event) {
 			uni.vibrateShort();
-			this.zoneDataA[this.zoneIndex].value2 = event.detail;
+			this.setZoneData.value2 = event.detail;
 			this._sendModelParams();
 		},
 		// 呼吸节奏
 		rhythmChange(event) {
 			uni.vibrateShort();
-			this.zoneDataA[this.zoneIndex].value3 = event.detail;
+			this.setZoneData.value3 = event.detail;
 			this._sendModelParams();
 		},
 		// 发送颜色设置
 		_sendModelColor() {
-			const type = '01'; // 0x00：参数设置 0x01：模式设置
-			const { code, mode, value4 } = this.zoneDataA[this.zoneIndex];
+			const data1 = '01'; // 0x00：参数设置 0x01：模式设置
+			const { code: data0, mode: data2, value4 } = this.setZoneData;
+
 			const [red, green, blue] = value4.split(',');
 
-			const msg = `1606${code}${type}${mode}${util.colorRGB2Hex(
-				red,
-				green,
-				blue
-			)}`;
+			const data3 = numberToHex(red);
+			const data4 = numberToHex(green);
+			const data5 = numberToHex(blue);
 
-			this._sendSettings(msg, () => {});
+			const msg = `8606${data0}${data1}${data2}${data3}${data4}${data5}`;
+
+			this._checkBleState(() => {
+				this._easySendData(msg, true, {
+					data0,
+					data1,
+					data2,
+					data3,
+					data4,
+					data5
+				});
+			});
 		},
 		// 发送模式设置
 		_sendModelParams() {
-			const type = '00'; // 0x00：参数设置 0x01：模式设置
-			const { code, value1, value2, value3 } = this.zoneDataA[this.zoneIndex];
+			const data1 = '00'; // 0x00：参数设置 0x01：模式设置
+			const { code: data0, value1, value2, value3 } = this.setZoneData;
 
 			const data2 = numberToHex(value1);
 			const data3 = numberToHex(value2);
 			const data4 = numberToHex(value3);
 
-			const msg = `1606${code}${type}${data2}${data3}${data4}ff`;
-			this._sendSettings(msg, () => {});
+			const msg = `8606${data0}${data1}${data2}${data3}${data4}ff`;
+
+			this._checkBleState(() => {
+				this._easySendData(msg, true, { data0, data1, data2, data3, data4 });
+			});
 		},
 		// 发送模式设置
 		_sendModelMode() {
-			const type = '01'; // 0x00：参数设置 0x01：模式设置
-			const { code, mode, mode2 } = this.zoneDataA[this.zoneIndex];
-			const msg = `1606${code}${type}${mode}${mode2}ffff`;
-			this._sendSettings(msg, () => {});
+			const data1 = '01'; // 0x00：参数设置 0x01：模式设置
+			const { code: data0, mode: data2, mode2: data3 } = this.setZoneData;
+
+			const msg = `8606${data0}${data1}${data2}${data3}ffff`;
+
+			this._checkBleState(() => {
+				this._easySendData(msg, true, { data0, data1, data2, data3 });
+			});
 		},
 		// 发送爆闪模式设置
 		_sendModelRhythm() {
-			const type = '01'; // 0x00：参数设置 0x01：模式设置
-			const { code, mode, value5 } = this.zoneDataA[this.zoneIndex];
+			const data1 = '01'; // 0x00：参数设置 0x01：模式设置
+			const { code: data0, mode: data2, value5 } = this.setZoneData;
 
 			const data3 = numberToHex(value5);
-			const msg = `1606${code}${type}${mode}${data3}ffff`;
-			this._sendSettings(msg, () => {});
+
+			const msg = `8606${data0}${data1}${data2}${data3}ffff`;
+			this._checkBleState(() => {
+				this._easySendData(msg, true, { data0, data1, data2, data3 });
+			});
 		},
 		// 发送天气模式设置
 		_sendModelWeather() {
-			const type = '01'; // 0x00：参数设置 0x01：模式设置
-			const { code, mode, weather } = this.zoneDataA[this.zoneIndex];
+			const data1 = '01'; // 0x00：参数设置 0x01：模式设置
+			const { code: data0, mode: data2, weather } = this.setZoneData;
 
 			const data3 = numberToHex(weather.humidity);
 			const data4 = numberToHex(weather.temperature);
 
-			const msg = `1606${code}${type}${mode}${data3}${data4}ff`;
-			this._sendSettings(msg, () => {});
+			const msg = `8606${data0}${data1}${data2}${data3}${data4}ff`;
+
+			this._checkBleState(() => {
+				this._easySendData(msg, true, { data0, data1, data2, data3, data4 });
+			});
 		},
 		// 统一发送设置命令
-		_sendSettings: debounce(function (msg, cb) {
-			this.$nextTick(() => {
-				// 发送设置
-				const { connected, receiveDataValue, ecUserPasswordPassed } =
-					this.getBleData;
+		_easySendData(msg, isHex = true, extraData) {
+			console.log('发送设置命令========', msg);
 
-				if (!connected) {
-					return Toast('蓝牙未连接');
-				}
-				if (!receiveDataValue) {
-					return Toast('蓝牙未响应');
-				}
+			ecBLE.easySendData(msg, isHex, extraData);
 
-				if (ecUserPasswordPassed !== '1') {
-					return uni.$emit('checkPassword');
-				}
-
-				ecBLE.easySendData(msg);
-
-				cb && cb();
+			uni.$on('setCallback', (res) => {
+				// 监听设置回调
+				console.log('setCallback======', res);
 			});
-		}, 100),
+		},
+		_checkBleState: debounce(function (cb, fail) {
+			// 发送设置
+			const { connected, receiveDataValue, ecUserPasswordPassed } =
+				this.getBleData;
+
+			if (!connected) {
+				fail && typeof fail === 'function' && fail();
+				return Toast('蓝牙未连接');
+			}
+			if (!receiveDataValue) {
+				fail && typeof fail === 'function' && fail();
+				return Toast('蓝牙未响应');
+			}
+
+			if (ecUserPasswordPassed !== '1') {
+				fail && typeof fail === 'function' && fail();
+				return uni.$emit('checkPassword');
+			}
+
+			cb && typeof cb === 'function' && cb();
+		}, 300),
 		_getColorRgb(color) {
 			const colorArr = (color || '').split(',');
 			return {
@@ -457,7 +520,7 @@ export default {
 		_getKeysList(keys) {
 			const list = [];
 			Object.keys(this.zoneKeysDataA).forEach((key) => {
-				if (keys.includes(key)) {
+				if ((keys || []).includes(key)) {
 					list.push({ label: this.zoneKeysDataA[key], value: key });
 				}
 			});
@@ -764,8 +827,9 @@ export default {
 				align-items: center;
 			}
 			image {
-				width: 40rpx;
-				height: 40rpx;
+				width: 42rpx;
+				height: 42rpx;
+				object-fit: contain;
 				margin-right: 5rpx;
 			}
 
@@ -779,9 +843,9 @@ export default {
 			::v-deep van-radio {
 				width: 50%;
 				margin-top: 10px;
+				transform: scale(1.05);
 				.van-radio {
 					margin-right: 0;
-					line-height: 1.5em;
 					display: flex;
 					align-items: center;
 				}
@@ -796,6 +860,7 @@ export default {
 				image {
 					width: 28rpx;
 					height: 28rpx;
+					object-fit: contain;
 					margin-left: 0;
 				}
 				.radio_label {

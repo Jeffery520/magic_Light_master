@@ -144,7 +144,7 @@ export default {
 			align-items: center;
 			justify-content: space-between;
 			font-size: $uni-font-size-sm;
-			line-height: 40rpx;
+			line-height: 45rpx;
 			& + .state_item {
 				border-top: 1rpx solid rgba(0, 0, 0, 0.3);
 			}

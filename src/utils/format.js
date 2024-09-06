@@ -104,10 +104,20 @@ const numberToHex = (num) => {
 	return `${hex.padStart(2, '0')}`;
 };
 
+// 将十六进制字符串转为十进制数
+const hexToNumber = (hex) => {
+	// 判断是否为十六进制数
+	if (!/^[0-9a-fA-F]+$/.test(hex)) {
+		return hex;
+	}
+	return parseInt(hex, 16);
+};
+
 module.exports = {
 	formatTime,
 	formatNumber,
 	numberToHex,
+	hexToNumber,
 	hexToAscii,
 	hexStrToArr,
 	checkSumAndXOR,

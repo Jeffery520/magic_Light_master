@@ -107,7 +107,6 @@ export default {
 			}
 		}, 500),
 		blurFn(index) {
-			console.log(this.$refs.focus1);
 			this.selectionStart = -1;
 			this.selectionEnd = -1;
 			if (index == 1) this.focus1 = false;
@@ -189,7 +188,9 @@ export default {
 	}
 
 	::v-deep van-field {
-		padding: 0 !important;
+		padding: 0 5rpx !important;
+		border-radius: 3rpx;
+		overflow: hidden;
 		.van-cell {
 			padding: 0 !important;
 			background: none !important;
@@ -200,17 +201,17 @@ export default {
 
 		&:nth-of-type(1) {
 			border-color: rgba(255, 0, 0, 1) !important;
-			background: rgba(255, 0, 0, 1) !important;
+			background: rgba(255, 0, 0, 0.8) !important;
 		}
 
 		&:nth-of-type(2) {
 			border-color: rgba(0, 255, 0, 1) !important;
-			background: rgba(0, 255, 0, 1) !important;
+			background: rgba(0, 255, 0, 0.8) !important;
 		}
 
 		&:nth-of-type(3) {
 			border-color: rgba(0, 0, 255, 1) !important;
-			background: rgba(0, 0, 255, 1) !important;
+			background: rgba(0, 0, 255, 0.8) !important;
 		}
 
 		&.u-border {
@@ -220,18 +221,19 @@ export default {
 		.input-placeholder {
 			font-size: $uni-font-size-sm;
 			font-weight: normal;
-			text-shadow: 0px 1px 1px rgba(0, 0, 0, 0.1);
+			text-shadow: 0px 0 1px rgba(0, 0, 0, 1);
 			color: rgba(255, 255, 255, 0.5) !important;
 		}
+
 		.van-field__body {
 			.van-field__control {
 				width: 46rpx !important;
 				min-height: 1em !important;
-				height: 1em !important;
-				line-height: 1em !important;
-				font-size: $uni-font-size-sm;
-				text-shadow: 0px 1rpx 5rpx rgba(0, 0, 0, 0.5);
-				color: rgba(255, 255, 255, 0.8) !important;
+				height: 1.3em !important;
+				line-height: 1.3em !important;
+				font-size: 22rpx;
+				text-shadow: 0 0 1px rgba(0, 0, 0, 1);
+				color: rgba(255, 255, 255, 0.9) !important;
 			}
 		}
 	}

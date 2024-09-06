@@ -66,7 +66,7 @@
 						type="number"
 						border="surround"
 						fontSize="16"
-						:value="coustomColor.red"
+						:value="inputColor.red"
 						@input="onInputColor($event, 'red')"
 						@blur="blurFn(1)"
 					>
@@ -85,7 +85,7 @@
 						type="number"
 						border="surround"
 						fontSize="16"
-						:value="coustomColor.green"
+						:value="inputColor.green"
 						@input="onInputColor($event, 'green')"
 						@blur="blurFn(2)"
 					>
@@ -104,7 +104,7 @@
 						type="number"
 						border="surround"
 						fontSize="16"
-						:value="coustomColor.blue"
+						:value="inputColor.blue"
 						@input="onInputColor($event, 'blue')"
 						@blur="blurFn(3)"
 					>
@@ -125,7 +125,7 @@ let sliderCtx = {};
 
 export default {
 	props: {
-		currentColor: {
+		modelValue: {
 			type: Object,
 			default() {
 				return {};
@@ -146,9 +146,9 @@ export default {
 			dpr: 1,
 			pickColor: null,
 			canvasWidth: 360, //这里最大为750rpx铺满屏幕
-			valueWidthOrHerght: 0,
+			valueWidthOrHeight: 0,
 			currentMode: 0,
-			coustomColor: {
+			inputColor: {
 				red: 255,
 				green: 0,
 				blue: 0
@@ -165,11 +165,13 @@ export default {
 		};
 	},
 	watch: {
-		currentColor: {
-			handler() {
-				const { red, green, blue } = this.currentColor;
+		modelValue: {
+			handler(val) {
+				const { red, green, blue } = val;
+
+				this.inputColor = val;
 				this.currentBg = `rgb(${red},${green},${blue})`;
-				this.pickColor = JSON.stringify(this.currentColor);
+				this.pickColor = JSON.stringify(val);
 
 				this.$nextTick(() => {
 					if (this.currentMode == 0) {
@@ -259,7 +261,7 @@ export default {
 		},
 		async init() {
 			const Query = uni.createSelectorQuery().in(this);
-			const rect = await this.getCancvasWidth(Query);
+			const rect = await this.getCanvasWidth(Query);
 			this.dpr = uni.getSystemInfoSync().pixelRatio;
 
 			Query.select('#colorPickerSlider')
@@ -269,18 +271,18 @@ export default {
 					canvas.height = rect.height * this.dpr;
 					sliderCtx = canvas.getContext('2d');
 					// 设置默认位置
-					let h = this.currentColor
+					let h = this.modelValue
 						? util.rgb2hsl(
-								this.currentColor.red,
-								this.currentColor.green,
-								this.currentColor.blue
+								this.modelValue.red,
+								this.modelValue.green,
+								this.modelValue.blue
 						  )
 						: util.rgb2hsl(255, 0, 0);
 
 					util.drawSlider(
 						sliderCtx,
-						this.valueWidthOrHerght * this.dpr,
-						this.valueWidthOrHerght * this.dpr,
+						this.valueWidthOrHeight * this.dpr,
+						this.valueWidthOrHeight * this.dpr,
 						h[0],
 						this.dpr
 					);
@@ -294,8 +296,8 @@ export default {
 					colorPickerCtx = canvas.getContext('2d');
 					util.drawRing(
 						colorPickerCtx,
-						this.valueWidthOrHerght * this.dpr,
-						this.valueWidthOrHerght * this.dpr,
+						this.valueWidthOrHeight * this.dpr,
+						this.valueWidthOrHeight * this.dpr,
 						this.dpr
 					);
 				})
@@ -306,12 +308,12 @@ export default {
 				}, 300);
 			});
 		},
-		getCancvasWidth(Query) {
+		getCanvasWidth(Query) {
 			return new Promise((resolve) => {
 				Query.select('#colorPicker')
 					.boundingClientRect((rect) => {
-						this.valueWidthOrHerght = rect.width;
-						this.coustomColor = {
+						this.valueWidthOrHeight = rect.width;
+						this.inputColor = {
 							red: 255,
 							green: 0,
 							blue: 0
@@ -328,25 +330,20 @@ export default {
 		},
 		onInputColor: throttle(function (event, key = 'red') {
 			if (!key) return;
-			this.coustomColor[key] = event?.detail || 0;
-			if (this.coustomColor.red > 255) this.coustomColor.red = 255;
-			if (this.coustomColor.green > 255) this.coustomColor.green = 255;
-			if (this.coustomColor.blue > 255) this.coustomColor.blue = 255;
+			this.inputColor[key] = event?.detail || 0;
+			if (this.inputColor.red > 255) this.inputColor.red = 255;
+			if (this.inputColor.green > 255) this.inputColor.green = 255;
+			if (this.inputColor.blue > 255) this.inputColor.blue = 255;
 			if (
-				this.coustomColor.red !== '' &&
-				this.coustomColor.green !== '' &&
-				this.coustomColor.blue !== ''
+				this.inputColor.red !== '' &&
+				this.inputColor.green !== '' &&
+				this.inputColor.blue !== ''
 			) {
-				this.$emit('change', this.coustomColor);
+				this.$emit('change', this.inputColor);
 			}
 		}, 500),
-		onFocus(e) {
-			console.log(this.$refs.onFocus1);
-			console.log((this.$refs.onFocus1.selectionStart = 0));
-			console.log((this.$refs.onFocus1.selectionEnd = 10));
+		onFocus() {
 			this.$refs.onFocus1.select();
-			console.log(e);
-			console.log(3423);
 		},
 		onSlide: throttle(function (e) {
 			uni.vibrateShort();
@@ -368,7 +365,7 @@ export default {
 						green: result.data[1],
 						blue: result.data[2]
 					});
-					this.coustomColor = {
+					this.inputColor = {
 						red: result.data[0],
 						green: result.data[1],
 						blue: result.data[2]
@@ -380,8 +377,8 @@ export default {
 					});
 					util.drawSlider(
 						sliderCtx,
-						this.valueWidthOrHerght * this.dpr,
-						this.valueWidthOrHerght * this.dpr,
+						this.valueWidthOrHeight * this.dpr,
+						this.valueWidthOrHeight * this.dpr,
 						h[0],
 						this.dpr
 					);
@@ -537,7 +534,7 @@ export default {
 							height: 50rpx !important;
 							line-height: 50rpx !important;
 							font-size: 32rpx;
-							text-shadow: 0px 1rpx 5rpx rgba(0, 0, 0, 0.5);
+							text-shadow: 0px 0 10rpx rgba(0, 0, 0, 1);
 							color: rgba(255, 255, 255, 1) !important;
 						}
 					}
