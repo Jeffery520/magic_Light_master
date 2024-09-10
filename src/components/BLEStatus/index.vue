@@ -403,11 +403,31 @@ export default {
 		_changePassword(password) {
 			this.isSendPassword = true;
 
+			const data0 = '01';
+			const [data1, data2, data3, data4] = password
+				.split('')
+				.map((s) => '0' + s);
+
+			const pwStr = `8305${data0}${data1}${data2}${data3}${data4}`;
+
 			setTimeout(() => {
-				this._easySendData(password, true);
+				ecBLE.easySendData(pwStr, true, {
+					data0,
+					data1,
+					data2,
+					data3,
+					data4
+				});
 			}, 100);
+
 			setTimeout(() => {
-				this._easySendData(password, true);
+				ecBLE.easySendData(pwStr, true, {
+					data0,
+					data1,
+					data2,
+					data3,
+					data4
+				});
 			}, 1000);
 		},
 
@@ -447,6 +467,7 @@ export default {
 			}
 
 			this._keepBleHear(connected);
+			this._checkPassword(connected);
 
 			this.$emit('statusChange', !!connected);
 		}, 100),
@@ -456,26 +477,46 @@ export default {
 				return ecBLE.easySendHeart('', true);
 			}
 
-			ecBLE.easySendHeart('8402ffff', true);
+			const [data0, data1] = ['FF', 'FF'];
 
-			setTimeout(() => {
-				this._checkPassword();
-			}, 1000);
-
-			setTimeout(() => {
-				ecBLE.easySendHeart('8402ffff', true);
-			}, 2000);
-
-			setTimeout(() => {
-				this._checkPassword();
-			}, 3000);
+			ecBLE.easySendHeart(`8402${data0}${data1}`, true, {
+				data0,
+				data1
+			});
 		}, 100),
 
-		_checkPassword() {
+		_checkPassword(connect = false) {
+			if (!connect) {
+				return;
+			}
+
+			_checkFn();
+
 			setTimeout(() => {
-				const pwStr = `830502ffffffff`;
-				ecBLE.easySendData(pwStr, true);
-			}, 100);
+				_checkFn();
+			}, 1000);
+
+			function _checkFn() {
+				const [data0, data1, data2, data3, data4] = [
+					'02',
+					'FF',
+					'FF',
+					'FF',
+					'FF'
+				];
+
+				ecBLE.easySendData(
+					`8305${data0}${data1}${data2}${data3}${data4}`,
+					true,
+					{
+						data0,
+						data1,
+						data2,
+						data3,
+						data4
+					}
+				);
+			}
 		},
 
 		async _createConnect(item, index) {
@@ -495,24 +536,7 @@ export default {
 				});
 			});
 		}),
-		_checkMessage(aHexStr, qHexArr, disTime) {
-			const qHexArr2 = (qHexArr || []).map((s) => s.toUpperCase());
-
-			const hexArr = hexStrToArr(aHexStr)
-				.map((s) => s.toUpperCase())
-				.slice(3, -1);
-
-			const [data0, data1, data2, data3, data4, data5] = hexArr;
-
-			const zoneData = {
-				data0,
-				data1,
-				data2,
-				data3,
-				data4,
-				data5
-			};
-
+		_checkSetState(zoneData) {
 			const { sendTime, sendMsg } = this.sendData || {};
 
 			const sendMsgKeys = Object.keys(sendMsg || {}).filter((key) =>
@@ -531,18 +555,17 @@ export default {
 					return sendMsg[key] !== zoneData[key];
 				});
 
-			console.log('=======收到消息======', aHexStr, hexArr, sendMsgKeys);
-
-			// 指令设置成功
-			if (isSuccess) {
-				uni.$emit('setCallback', { status: 1, data: zoneData });
-			}
+			console.log(
+				'=======收到消息======',
+				isSuccess,
+				JSON.stringify(zoneData),
+				JSON.stringify(sendMsg)
+			);
 
 			// sendTime 为空说明未发送指令
 			// sendTime 距离发送指令时间超过600m秒，说明指令已超时
 			if (
 				!sendTime ||
-				sendTime < 0 ||
 				(sendTime && new Date().getTime() - sendTime > 600) ||
 				isFailed
 			) {
@@ -550,6 +573,22 @@ export default {
 				Toast('设置失败');
 				uni.$emit('setCallback', { status: 0, data: zoneData });
 			}
+
+			// 指令设置成功
+			if (isSuccess) {
+				uni.$emit('setCallback', { status: 1, data: zoneData });
+			}
+		},
+		_checkMessage(aHexStr, qHexArr, disTime) {
+			const qHexArr2 = (qHexArr || []).map((s) => s.toUpperCase());
+
+			const hexArr = hexStrToArr(aHexStr)
+				.map((s) => s.toUpperCase())
+				.slice(3, -1);
+
+			const [data0, data1, data2, data3, data4, data5] = hexArr;
+
+			this._checkSetState({ data0, data1, data2, data3, data4, data5 });
 
 			/** 1606 氛围灯信息 **/
 			if (aHexStr.indexOf('2e1606') >= 0) {

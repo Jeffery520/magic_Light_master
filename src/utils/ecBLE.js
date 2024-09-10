@@ -411,6 +411,7 @@ const onBLEConnectionStateChange = (cb) => {
 				// 判断消息应答是否在3000ms内
 				const bleMsgQueue = store.getters.bleMsgQueue;
 				const bleMsgQueueLast = cloneDeep(bleMsgQueue?.at(-1) || {});
+
 				const { hexArr, time, isReply } = bleMsgQueueLast;
 
 				const disTime = time ? new Date().getTime() - time : -1;
@@ -707,7 +708,7 @@ const writeBLECharacteristicValue = (data) => {
 	});
 };
 
-const easySendData = async (str, isHex = true, extraData = null) => {
+const easySendData = async (str, isHex = true, extraData = {}) => {
 	let sendMsg = {};
 	Object.keys(extraData).forEach((key) => {
 		sendMsg[key] = extraData[key].toUpperCase();
@@ -770,7 +771,11 @@ const easySendData = async (str, isHex = true, extraData = null) => {
 		// 记录本次发送时间
 		const hexArr = hexStrToArr(hexStr).map((s) => s.toUpperCase());
 
-		console.log('=======发送指令=======', hexArr, sendMsg);
+		console.log(
+			'=======发送指令=======',
+			hexArr.join(' '),
+			JSON.stringify(sendMsg)
+		);
 
 		uni.$emit('onSendMsg', {
 			sendTime: new Date().getTime(),
@@ -817,7 +822,7 @@ const easySendData = async (str, isHex = true, extraData = null) => {
 	}
 };
 
-const easySendHeart = (str, isHex = true) => {
+const easySendHeart = (str, isHex = true, extraData = {}) => {
 	clearInterval(HEART_TIMER);
 
 	if (!str) {
@@ -825,11 +830,14 @@ const easySendHeart = (str, isHex = true) => {
 	}
 
 	HEART_TIMER = setInterval(async () => {
-		// 判断上一条消息是否超过100ms
-		const { time } = store.getters.bleMsgQueue?.at(-1) || {};
-		if (time && new Date().getTime() - time >= heartInterval) {
-			console.log('=======发送心跳======', time);
-			await easySendData(str, isHex);
+		// 判断消息应答是否在3000ms内
+		const bleMsgQueue = store.getters.bleMsgQueue;
+		const bleMsgQueueLast = cloneDeep(bleMsgQueue?.at(-1) || {});
+
+		const { time } = bleMsgQueueLast;
+
+		if (!time || (time && new Date().getTime() - time >= heartInterval)) {
+			await easySendData(str, isHex, extraData);
 		}
 	}, 1000);
 };
