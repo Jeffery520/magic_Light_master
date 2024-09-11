@@ -754,9 +754,7 @@ const easySendData = async (str, isHex = true, extraData = {}) => {
 		let buffer, hexStr;
 
 		if (isHex) {
-			hexStr =
-				hexWithFrameHeader(str.replaceAll(' ')) +
-				checkSumAndXOR(str.replaceAll(' '));
+			hexStr = hexWithFrameHeader(str1) + checkSumAndXOR(str1);
 
 			const typedArray = new Uint8Array(
 				hexStr.match(/[\da-f]{2}/gi).map(function (h) {

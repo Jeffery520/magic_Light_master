@@ -68,8 +68,10 @@ const checkSumAndXOR = (hexStr) => {
 	let sum = total % 256;
 	let xorResult = sum ^ 0xff;
 
-	return xorResult.toString(16);
+	return `${xorResult.toString(16).padStart(2, '0')}`;
 };
+
+console.log(checkSumAndXOR('8606010100852550'));
 
 /**
  * 将一串16进制转换成以"2e"开头，并添加帧对齐的起始头格式
@@ -99,10 +101,12 @@ const strToHexCharCode = (str) => {
 
 const numberToHex = (num) => {
 	// 将十进制数转换为十六进制数
-	let hex = num.toString(16);
+	const hex = parseInt(num).toString(16).padStart(2, '0');
 	// 确保十六进制数是两位数
-	return `${hex.padStart(2, '0')}`;
+	return hex;
 };
+
+console.log(numberToHex(100));
 
 // 将十六进制字符串转为十进制数
 const hexToNumber = (hex) => {

@@ -275,8 +275,6 @@ const store = new Vuex.Store({
 			state.bleMsgQueueWait = [];
 		},
 		CLEAR_STATE(state) {
-			state.bleData = {};
-			state.myBleList = [];
 			state.bleMsgQueueWait = [];
 			state.bleMsgQueue = [];
 			state.zoneDataA = zoneDataA;
@@ -290,10 +288,6 @@ const store = new Vuex.Store({
 					{ code: '00', name: '低刹' },
 					{ code: '01', name: '高刹' }
 				]
-			};
-			state.bleMcuData = {
-				protocol: '',
-				mcuVersion: ''
 			};
 		}
 	},

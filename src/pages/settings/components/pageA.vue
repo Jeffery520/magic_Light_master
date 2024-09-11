@@ -308,10 +308,11 @@ export default {
 		// 模式切换
 		modelChange(code) {
 			uni.vibrateShort();
+			const code1 = code;
 
-			this.currentModel = code;
-			this.setZoneData.mode = code;
-			if (['01', '02', '04'].includes(code)) {
+			this.currentModel = code1;
+			this.setZoneData.mode = code1;
+			if (['01', '02', '04'].includes(code1)) {
 				this.setZoneData.mode2 = '00';
 			}
 
@@ -333,7 +334,9 @@ export default {
 				signal: signal
 			};
 
-			const msg = `8703${data0}${data1}${data2}`;
+			const msg = ['87', '03', data0, data1, data2]
+				.map((item) => `${item}`.padStart(2, '0'))
+				.join('');
 
 			this._checkBleState(() => {
 				this._easySendData(msg, true, {
@@ -412,7 +415,9 @@ export default {
 			const data4 = numberToHex(green);
 			const data5 = numberToHex(blue);
 
-			const msg = `8606${data0}${data1}${data2}${data3}${data4}${data5}`;
+			const msg = ['86', '06', data0, data1, data2, data3, data4, data5]
+				.map((item) => `${item}`.padStart(2, '0'))
+				.join('');
 
 			this._checkBleState(() => {
 				this._easySendData(msg, true, {
@@ -434,7 +439,9 @@ export default {
 			const data3 = numberToHex(value2);
 			const data4 = numberToHex(value3);
 
-			const msg = `8606${data0}${data1}${data2}${data3}${data4}ff`;
+			const msg = ['86', '06', data0, data1, data2, data3, data4, 'ff']
+				.map((item) => `${item}`.padStart(2, '0'))
+				.join('');
 
 			this._checkBleState(() => {
 				this._easySendData(msg, true, { data0, data1, data2, data3, data4 });
@@ -445,8 +452,9 @@ export default {
 			const data1 = '01'; // 0x00：参数设置 0x01：模式设置
 			const { code: data0, mode: data2, mode2: data3 } = this.setZoneData;
 
-			const msg = `8606${data0}${data1}${data2}${data3}ffff`;
-
+			const msg = ['86', '06', data0, data1, data2, data3, 'ff', 'ff']
+				.map((item) => `${item}`.padStart(2, '0'))
+				.join('');
 			this._checkBleState(() => {
 				this._easySendData(msg, true, { data0, data1, data2, data3 });
 			});
@@ -458,7 +466,9 @@ export default {
 
 			const data3 = numberToHex(value5);
 
-			const msg = `8606${data0}${data1}${data2}${data3}ffff`;
+			const msg = ['86', '06', data0, data1, data2, data3, 'ff', 'ff']
+				.map((item) => `${item}`.padStart(2, '0'))
+				.join('');
 			this._checkBleState(() => {
 				this._easySendData(msg, true, { data0, data1, data2, data3 });
 			});
@@ -471,8 +481,9 @@ export default {
 			const data3 = numberToHex(weather.humidity);
 			const data4 = numberToHex(weather.temperature);
 
-			const msg = `8606${data0}${data1}${data2}${data3}${data4}ff`;
-
+			const msg = ['86', '06', data0, data1, data2, data3, data4, 'ff']
+				.map((item) => `${item}`.padStart(2, '0'))
+				.join('');
 			this._checkBleState(() => {
 				this._easySendData(msg, true, { data0, data1, data2, data3, data4 });
 			});

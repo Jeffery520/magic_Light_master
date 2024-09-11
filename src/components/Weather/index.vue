@@ -2,8 +2,16 @@
 	<view class="weather_container">
 		<view class="weather_wrap">
 			<view class="weather_left">
-				<text class="iconfont" :class="weatherData.icon"></text>
-				<view>
+				<view class="weather_left_top">
+					<text
+						v-if="weatherData.icon"
+						class="iconfont"
+						:class="weatherData.icon"
+					></text>
+					<text v-else class="no_weather">--</text>
+				</view>
+
+				<view class="weather_left_bottom">
 					<text>{{ weatherData.name }}</text>
 					<text class="item_label">湿度</text>
 					<text>{{ weatherData.humidity }}</text>
@@ -37,7 +45,7 @@
 
 <script>
 import { debounce } from '@/utils/lodash.min.js';
-import { weatherIcon } from './lib/index';
+import { getWeatherIcon } from './lib/index';
 import Toast from '@/wxcomponents/vant-weapp/toast/toast';
 
 export default {
@@ -62,7 +70,7 @@ export default {
 			},
 			weatherData: {
 				name: '未知',
-				icon: 'icon-554-weizhi',
+				icon: '',
 				humidity: '--',
 				temperature: '--'
 			}
@@ -72,18 +80,18 @@ export default {
 		weather: {
 			handler(val) {
 				if (val) {
-					const { humidity, temperature, weather } = val || {};
-					this.weatherData.name = weather;
-					this.weatherData.icon = weatherIcon?.[weather];
-					this.weatherData.humidity = humidity || '--';
-					this.weatherData.temperature = temperature || '--';
+					const { humidity, temperature, name } = val || {};
+					this.weatherData = {
+						name: name || '未知',
+						icon: getWeatherIcon(name),
+						humidity: humidity || '--',
+						temperature: temperature || '--'
+					};
 				}
 			},
-			deep: true
+			deep: true,
+			immediate: true
 		}
-	},
-	mounted() {
-		this.getWeather();
 	},
 	methods: {
 		getWeather: debounce(function () {
@@ -111,12 +119,13 @@ export default {
 				}
 
 				const { humidity, temperature, weather } = res3 || {};
-				this.weatherData.name = weather;
-				this.weatherData.icon = weatherIcon[weather];
-				this.weatherData.humidity = humidity || '--';
-				this.weatherData.temperature = temperature || '--';
 
-				this.$emit('change', this.weatherData);
+				this.$emit('change', {
+					name: weather || '未知',
+					icon: getWeatherIcon(weather),
+					humidity: humidity || '--',
+					temperature: temperature || '--'
+				});
 
 				setTimeout(() => {
 					this.loading = false;
@@ -146,7 +155,6 @@ export default {
 				wx.getLocation({
 					type: 'wgs84',
 					success(res) {
-						console.log(res);
 						const { latitude, longitude } = res || {};
 						resolve({ latitude, longitude });
 					},
@@ -232,14 +240,23 @@ export default {
 
 		.weather_left {
 			width: 30%;
-			.iconfont {
-				font-size: 54px;
-				line-height: 60px;
-				height: 56px;
-			}
-			> view {
+			margin-right: 5px;
+			.weather_left_top {
+				height: 60px;
 				display: flex;
 				align-items: center;
+				justify-content: center;
+				padding-bottom: 20rpx;
+				.iconfont,
+				.no_weather {
+					font-size: 60px;
+				}
+			}
+
+			.weather_left_bottom {
+				display: flex;
+				align-items: center;
+				justify-content: center;
 				line-height: 1em;
 				.item_label {
 					margin-left: 10rpx;
@@ -277,27 +294,26 @@ export default {
 		}
 	}
 	.contact_button {
-		width: 360rpx;
-		height: 70rpx;
-		line-height: 70rpx;
+		width: 300rpx;
+		height: 60rpx;
+		line-height: 60rpx;
 		border: none;
-		padding: 0;
 		margin-top: 25px;
 		background: linear-gradient(to right, #8257f8, #29b7d5);
 		border-radius: 70px;
 		transition: all 0.2s;
+		padding: 6rpx;
 		&:active,
 		&:focus,
 		&:hover {
 			opacity: 0.5;
 		}
 		> view {
-			height: 58rpx;
-			line-height: 58rpx;
+			width: 100%;
+			height: 100%;
 			background: #1f2a44;
 			color: #fff;
 			font-size: 14px;
-			margin: 6rpx;
 			border-radius: 70px;
 			display: flex;
 			align-items: center;

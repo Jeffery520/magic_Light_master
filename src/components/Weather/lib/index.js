@@ -1,70 +1,111 @@
-export const weatherIcon = {
-	晴: 'icon-150-qing',
-	少云: 'icon-101-duoyun',
-	晴间多云: 'icon-153-qingjianduoyun',
-	多云: 'icon-103-qingjianduoyun',
-	阴: 'icon-104-yin',
-	有风: 'icon-457-zhenxue',
-	平静: 'icon-901-leng',
-	微风: 'icon-308-jiduanjiangyu',
-	和风: 'icon-103-qingjianduoyun',
-	清风: 'icon-305-xiaoyu',
-	'强风/劲风': 'icon-301-qiangzhenyu',
-	疾风: 'icon-303-qiangleizhenyu',
-	大风: 'icon-304-leizhenyubanyoubingbao',
-	烈风: 'icon-305-xiaoyu',
-	风暴: 'icon-501-wu',
-	狂爆风: 'icon-502-mai',
-	飓风: 'icon-503-yangsha',
-	热带风暴: 'icon-504-fuchen',
-	霾: 'icon-505-fuchen',
-	中度霾: 'icon-506-fuchen',
-	重度霾: 'icon-507-shachenbao',
-	严重霾: 'icon-508-qiangshachenbao',
-	阵雨: 'icon-509-nongwu',
-	雷阵雨: 'icon-510-qiangnongwu',
-	雷阵雨并伴有冰雹: 'icon-511-zhongdumai',
-	小雨: 'icon-512-zhongdumai',
-	中雨: 'icon-513-yanzhongmai',
-	大雨: 'icon-514dawu',
-	暴雨: 'icon-515-teqiangnongwu',
-	大暴雨: 'icon-516-dadaobaoxue',
-	特大暴雨: 'icon-517-baoyudaodabaoyu',
-	强阵雨: 'icon-518-juanzhenyu',
-	强雷阵雨: 'icon-519-daleizhenyu',
-	极端降雨: 'icon-520-jiduanjiangyu',
-	'毛毛雨/细雨': 'icon-521-xiaoyu',
-	雨: 'icon-522-yu',
-	'小雨-中雨': 'icon-523-xiaoyudaozhongyu',
-	'中雨-大雨': 'icon-524-zhongyudaodayu',
-	'大雨-暴雨': 'icon-525-dayudaobao',
-	'暴雨-大暴雨': 'icon-526-baoyudaodabaoyu',
-	'大暴雨-特大暴雨': 'icon-527-dabaoyudaotedabaoyu',
-	雨雪天气: 'icon-528-yuxuetianqi',
-	雨夹雪: 'icon-529-yujiaxue',
-	阵雨夹雪: 'icon-530-juanzhuyujiaxue',
-	冻雨: 'icon-531-dongyu',
-	雪: 'icon-532-xue',
-	阵雪: 'icon-533-zhenxue',
-	小雪: 'icon-534-xiaoxue',
-	中雪: 'icon-535-zhongxue',
-	大雪: 'icon-536-daxue',
-	暴雪: 'icon-537-baoxue',
-	'小雪-中雪': 'icon-538-xiaoxuetozhongxue',
-	'中雪-大雪': 'icon-539-zhongxuetodaxue',
-	'大雪-暴雪': 'icon-540-daxuetobaoxue',
-	浮尘: 'icon-541-fuchen',
-	扬沙: 'icon-542-yangsha',
-	沙尘暴: 'icon-543-shachenbao',
-	强沙尘暴: 'icon-544-qiangshachenbao',
-	龙卷风: 'icon-545-longjuanfeng',
-	雾: 'icon-546-wu',
-	浓雾: 'icon-547-nongwu',
-	强浓雾: 'icon-548-qiangnongwu',
-	轻雾: 'icon-549-qingwu',
-	大雾: 'icon-550-dawu',
-	特强浓雾: 'icon-551-teqiangnongwu',
-	热: 'icon-552-re',
-	冷: 'icon-553-leng',
-	未知: 'icon-554-weizhi'
+import weatherIcon from '@/static/iconfont/iconfont.json';
+
+const iconItems = [
+	{
+		name: '白天-多云',
+		keyword: '多云, 少云, 阴, 晴间多云'
+	},
+	{
+		name: '白天-大雨',
+		keyword: '大雨, 暴雨, 大暴雨, 特大暴雨, 强阵雨, 阵雨'
+	},
+	{
+		name: '白天-雷',
+		keyword: '雷阵雨, 强雷阵雨, 雷阵雨并伴有冰雹'
+	},
+	{
+		name: '白天-沙尘暴',
+		keyword: '沙尘暴, 浮尘, 扬沙, 强沙尘暴'
+	},
+	{
+		name: '白天-多云转晴',
+		keyword: '晴间多云'
+	},
+	{
+		name: '白天-雾霾',
+		keyword: '霾, 中度霾, 重度霾, 严重霾'
+	},
+	{
+		name: '白天-大雪',
+		keyword: '大雪, 暴雪, 大雪-暴雪'
+	},
+	{
+		name: '白天-小雪',
+		keyword: '小雪, 小雪-中雪'
+	},
+	{
+		name: '白天-中雪',
+		keyword: '中雪, 中雪-大雪'
+	},
+	{
+		name: '白天-小雨',
+		keyword: '小雨, 毛毛雨/细雨, 小雨-中雨'
+	},
+	{
+		name: '白天-中雨',
+		keyword: '中雨, 中雨-大雨'
+	},
+	{
+		name: '晚上-晴',
+		keyword: '晴, 微风, 平静, 有风'
+	},
+	{
+		name: '晚上-多云',
+		keyword: '多云'
+	},
+	{
+		name: '晚上-大雨',
+		keyword: '大雨'
+	},
+	{
+		name: '晚上-小雨',
+		keyword: '小雨'
+	},
+	{
+		name: '晚上-雷',
+		keyword: '雷阵雨'
+	},
+	{
+		name: '晚上-雪',
+		keyword: '雪'
+	},
+	{
+		name: '晚上-中雨',
+		keyword: '中雨'
+	},
+	{
+		name: '白天-晴',
+		keyword: '晴, 少云, 晴间多云, 平静, 微风, 和风, 清风'
+	},
+	{
+		name: '白天-冰雹',
+		keyword: '冰雹'
+	}
+];
+
+export const getWeatherIcon = (name = '') => {
+	// 获取当前时间
+	const now = new Date();
+
+	// 获取当前小时
+	const hour = now.getHours();
+
+	// 判断是白天还是夜晚
+	const timeOfDay = hour >= 6 && hour < 18 ? '白天' : '晚上';
+
+	const { css_prefix_text, glyphs } = weatherIcon || {};
+
+	const iconItem = iconItems.find((item) => {
+		return (
+			item.keyword.split(',').includes(name) && item.name.includes(timeOfDay)
+		);
+	});
+
+	const iconName = iconItem?.name || `${timeOfDay}-晴`;
+
+	const target = glyphs.find((item) => {
+		return item.name.includes(iconName);
+	});
+
+	return `${css_prefix_text}${target?.font_class}`;
 };

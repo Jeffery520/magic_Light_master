@@ -67,10 +67,14 @@
 					class="contact_button"
 					@click="handleStopDiscovery(true)"
 				>
-					停止搜索 <van-count-down :time="loadingTime" format="ss" /> s
+					<view class="contact_button_inner">
+						停止搜索 <van-count-down :time="loadingTime" format="ss" /> s
+					</view>
 				</view>
 				<view v-else class="contact_button" plain @click="handleDiscovery">
-					{{ deviceList.length == 0 ? '搜索蓝牙' : '重新搜索' }}
+					<view class="contact_button_inner">
+						{{ deviceList.length == 0 ? '搜索蓝牙' : '重新搜索' }}
+					</view>
 				</view>
 			</view>
 		</van-popup>
@@ -141,19 +145,22 @@ export default {
 			loading: false,
 			showPopup: false,
 			showPwPopup: false,
+			showPwPopup2: false,
 			connectLoading: false,
+			isSendPassword: false,
 			loadingTime: 1000 * 30,
+			bleNames: ['GM'],
 			discoveryTime: new Date().getTime(),
 			currentIndex: -1,
-			password: '',
 			passwordType: '0',
+			password: '',
+			setBleData: {},
+			deviceList: [],
+			myDeviceList: [],
 			sendData: {
 				sendTime: 0,
 				sendMsg: {}
-			},
-			setBleData: {},
-			deviceList: [],
-			myDeviceList: []
+			}
 		};
 	},
 	computed: {
@@ -191,9 +198,7 @@ export default {
 		},
 		setBleData: {
 			handler(val) {
-				this.deviceList = val.deviceList.filter(
-					(item) => item.name.indexOf('GM') >= 0
-				);
+				this.deviceList = val.deviceList;
 				this.$store.dispatch('setBleData', val);
 			},
 			deep: true
@@ -247,7 +252,9 @@ export default {
 	beforeDestroy() {
 		uni.$off('onShow');
 		uni.$off('checkPassword');
+		uni.$off('onSendMsg');
 		uni.$off('receiveMsg');
+		uni.$off('setCallback');
 		this.handleStopDiscovery();
 	},
 	methods: {
@@ -328,7 +335,7 @@ export default {
 					}
 					Toast.success('密码校验成功');
 				} else {
-					Toast.success('密码错误');
+					Toast.fail('密码错误');
 				}
 			} else {
 				this._changePassword(this.password.trim());
@@ -562,22 +569,22 @@ export default {
 				JSON.stringify(sendMsg)
 			);
 
-			// sendTime 为空说明未发送指令
-			// sendTime 距离发送指令时间超过600m秒，说明指令已超时
-			if (
-				!sendTime ||
-				(sendTime && new Date().getTime() - sendTime > 600) ||
-				isFailed
-			) {
-				// 指令设置失败
-				Toast('设置失败');
-				uni.$emit('setCallback', { status: 0, data: zoneData });
-			}
-
-			// 指令设置成功
-			if (isSuccess) {
-				uni.$emit('setCallback', { status: 1, data: zoneData });
-			}
+			// // sendTime 为空说明未发送指令
+			// // sendTime 距离发送指令时间超过600m秒，说明指令已超时
+			// if (
+			// 	!sendTime ||
+			// 	(sendTime && new Date().getTime() - sendTime > 600) ||
+			// 	isFailed
+			// ) {
+			// 	// 指令设置失败
+			// 	Toast('设置失败');
+			// 	uni.$emit('setCallback', { status: 0, data: zoneData });
+			// }
+			//
+			// // 指令设置成功
+			// if (isSuccess) {
+			// 	uni.$emit('setCallback', { status: 1, data: zoneData });
+			// }
 		},
 		_checkMessage(aHexStr, qHexArr, disTime) {
 			const qHexArr2 = (qHexArr || []).map((s) => s.toUpperCase());
@@ -591,7 +598,7 @@ export default {
 			this._checkSetState({ data0, data1, data2, data3, data4, data5 });
 
 			/** 1606 氛围灯信息 **/
-			if (aHexStr.indexOf('2e1606') >= 0) {
+			if (aHexStr.indexOf('2E1606') >= 0) {
 				const zoneDataA = this.$store.getters.zoneDataA;
 
 				const target = zoneDataA.find((item) => item.code === data0);
@@ -653,7 +660,7 @@ export default {
 			}
 
 			/** 1703 氛围灯关联信息 **/
-			if (aHexStr.indexOf('2e1703') >= 0) {
+			if (aHexStr.indexOf('2E1703') >= 0) {
 				const zoneDataA = this.$store.getters.zoneDataA;
 				const [data0, data1, data2] = hexArr;
 
@@ -679,7 +686,7 @@ export default {
 			}
 
 			/** 1202 灯控协议 **/
-			if (aHexStr.indexOf('2e1202') >= 0) {
+			if (aHexStr.indexOf('2E1202') >= 0) {
 				const [data0] = hexArr;
 				const bleMcuData = this.$store.getters.bleMcuData;
 				bleMcuData.protocol = data0 === '01' ? '有协议' : '无协议';
@@ -689,7 +696,7 @@ export default {
 			}
 
 			/** 15MCU 版本信息 **/
-			if (aHexStr.indexOf('2e15') >= 0) {
+			if (aHexStr.indexOf('2E15') >= 0) {
 				const bleMcuData = this.$store.getters.bleMcuData;
 				bleMcuData.mcuVersion = hexToAscii(hexArr.join('')).trim();
 				this.$store.dispatch('setMcuData', bleMcuData);
@@ -698,9 +705,8 @@ export default {
 			}
 
 			/** 1305 密码反馈信息 **/
-			if (aHexStr.indexOf('2e1305') >= 0) {
+			if (aHexStr.indexOf('2E1305') >= 0) {
 				// 密码弹窗打开 && 正在修改密码
-				const [data0, data1, data2, data3, data4] = hexArr;
 				const passwordPassed = data1 === '01' ? '1' : '0'; // 0 初始密码未修改 1 密码校验通过
 
 				// 修改密码
@@ -753,37 +759,40 @@ export default {
 		}),
 
 		_discoveryFn() {
-			ecBLE.startBluetoothDevicesDiscovery(async (name, rssi, deviceId) => {
-				console.log('搜索到蓝牙', name, deviceId);
-				this.deviceList = uniqBy(
-					[...this.deviceList, { name, deviceId }],
-					'deviceId'
-				).filter((item) => item.name.indexOf('GM') >= 0);
+			ecBLE.startBluetoothDevicesDiscovery(
+				this.bleNames,
+				async (name, rssi, deviceId) => {
+					console.log('搜索到蓝牙', name, deviceId);
+					this.deviceList = uniqBy(
+						[...this.deviceList, { name, deviceId }],
+						'deviceId'
+					);
 
-				this.setBleData.deviceList = uniqBy(
-					[...this.deviceList, { name, deviceId }],
-					'deviceId'
-				).filter((item) => item.name.indexOf('GM') >= 0);
+					this.setBleData.deviceList = uniqBy(
+						[...this.deviceList, { name, deviceId }],
+						'deviceId'
+					);
 
-				this.myDeviceList = this.$store.getters.myBleList.map((item) => {
-					item.connected = false;
-					return item;
-				});
+					this.myDeviceList = this.$store.getters.myBleList.map((item) => {
+						item.connected = false;
+						return item;
+					});
 
-				this.myDeviceList.forEach((item) => {
-					if (item?.deviceId === deviceId && !this.getBleData.connected) {
-						this.handleStopDiscovery();
-						this._connectFn(item);
-					}
-				});
+					this.myDeviceList.forEach((item) => {
+						if (item?.deviceId === deviceId && !this.getBleData.connected) {
+							this.handleStopDiscovery();
+							this._connectFn(item);
+						}
+					});
 
-				this.deviceList.forEach((item) => {
-					if (item?.name.indexOf('GM') >= 0 && !this.getBleData.connected) {
-						this.handleStopDiscovery();
-						this._connectFn(item);
-					}
-				});
-			});
+					this.deviceList.forEach((item) => {
+						if (!this.getBleData.connected) {
+							this.handleStopDiscovery();
+							this._connectFn(item);
+						}
+					});
+				}
+			);
 		},
 
 		_showModal(title, content) {
