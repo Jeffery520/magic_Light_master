@@ -1,7 +1,7 @@
 <template>
-<uni-shadow-root class="vant-weapp-switch-index"><view :class="(utils.bem('switch', { on: checked === activeValue, disabled }))+' custom-class'" :style="computed.rootStyle({ size, checked, activeColor, inactiveColor })" @click="onClick">
+<uni-shadow-root class="vant-weapp-switch-index"><view :class="(utils.bem('switch', { on: checked === activeValue, disabled }))+' custom-class'" :style="computed.rootStyle({ size, checked, activeColor, inactiveColor, activeValue })" @click="onClick">
   <view class="van-switch__node node-class">
-    <van-loading v-if="loading" :color="computed.loadingColor({ checked, activeColor, inactiveColor })" custom-class="van-switch__loading"></van-loading>
+    <van-loading v-if="loading" :color="computed.loadingColor({ checked, activeColor, inactiveColor, activeValue })" custom-class="van-switch__loading"></van-loading>
   </view>
 </view></uni-shadow-root>
 </template>

@@ -1,5 +1,5 @@
 <van-overlay
-  wx:if="{{ mask || forbidClick }}"
+  wx:if="{{(type === 'loading' || mask || forbidClick) && show}}"
   show="{{ show }}"
   z-index="{{ zIndex }}"
   custom-style="{{ mask ? '' : 'background-color: transparent;' }}"
@@ -10,11 +10,11 @@
   custom-class="van-toast__container"
 >
   <view
-    class="van-toast van-toast--{{ type === 'success'||type === 'fail'||type === 'loading' ? 'icon' : 'text' }} van-toast--{{ position }}"
+    class="van-toast van-toast--{{ (type === 'text' || type === 'html') ? 'text' : 'icon' }} van-toast--{{ position }} van-toast-show--{{ show }}"
     catch:touchmove="noop"
   >
     <!-- text only -->
-    <text wx:if="{{ type === 'text' }}">{{ message }}</text>
+    <view wx:if="{{ type === 'text' }}">{{ message }}</view>
 
     <!-- html only -->
     <rich-text wx:elif="{{ type === 'html' }}" nodes="{{ message }}"></rich-text>

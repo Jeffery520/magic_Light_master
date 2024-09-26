@@ -1,7 +1,9 @@
 <template>
 <uni-shadow-root class="vant-weapp-goods-action-icon-index"><van-button square :id="id" size="large" :lang="lang" :loading="loading" :disabled="disabled" :open-type="openType" :business-id="businessId" custom-class="van-goods-action-icon" :session-from="sessionFrom" :app-parameter="appParameter" :send-message-img="sendMessageImg" :send-message-path="sendMessagePath" :show-message-card="showMessageCard" :send-message-title="sendMessageTitle" @click="onClick" @error="onError" @contact="onContact" @opensetting="onOpenSetting" @getuserinfo="onGetUserInfo" @getphonenumber="onGetPhoneNumber" @launchapp="onLaunchApp">
-  <van-icon v-if="icon" :name="icon" :dot="dot" :info="info" class="van-goods-action-icon__icon" custom-class="icon-class"></van-icon>
-  <slot v-else name="icon"></slot>
+  <van-icon v-if="icon" :name="icon" :dot="dot" :info="info" :size="size" :color="color" :class-prefix="classPrefix" class="van-goods-action-icon__icon" custom-class="icon-class" info-class="info-class"></van-icon>
+  <view v-else>
+    <slot name="icon"></slot>
+  </view>
   <text class="text-class">{{ text }}</text>
 </van-button></uni-shadow-root>
 </template>
@@ -16,13 +18,19 @@ import { VantComponent } from '../common/component';
 import { button } from '../mixins/button';
 import { link } from '../mixins/link';
 VantComponent({
-    classes: ['icon-class', 'text-class'],
+    classes: ['icon-class', 'text-class', 'info-class'],
     mixins: [link, button],
     props: {
         text: String,
         dot: Boolean,
         info: String,
         icon: String,
+        size: String,
+        color: String,
+        classPrefix: {
+            type: String,
+            value: 'van-icon',
+        },
         disabled: Boolean,
         loading: Boolean,
     },

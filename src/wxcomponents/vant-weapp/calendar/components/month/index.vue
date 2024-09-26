@@ -10,7 +10,7 @@
     </view>
 
     <view v-for="(item,index) in (days)" :key="item.index" :style="computed.getDayStyle(item.type, index, date, rowHeight, color, firstDayOfWeek)" :class="(utils.bem('calendar__day', [item.type]))+' '+(item.className)" :data-index="index" @click="onClick">
-      <view v-if="item.type === 'selected'" class="van-calendar__selected-day" :style="'background: '+(color)">
+      <view v-if="item.type === 'selected'" class="van-calendar__selected-day" :style="'width: '+(rowHeight)+'px; height: '+(rowHeight)+'px; background: '+(color)">
         <view v-if="item.topInfo" class="van-calendar__top-info">{{ item.topInfo }}</view>
         {{ item.text }}
         <view v-if="item.bottomInfo" class="van-calendar__bottom-info">

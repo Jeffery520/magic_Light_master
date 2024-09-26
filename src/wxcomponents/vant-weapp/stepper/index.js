@@ -16,7 +16,6 @@ VantComponent({
     props: {
         value: {
             type: null,
-            observer: 'observeValue',
         },
         integer: {
             type: Boolean,
@@ -61,9 +60,15 @@ VantComponent({
             value: true,
         },
         theme: String,
+        alwaysEmbed: Boolean,
     },
     data: {
         currentValue: '',
+    },
+    watch: {
+        value() {
+            this.observeValue();
+        },
     },
     created() {
         this.setData({
@@ -72,10 +77,8 @@ VantComponent({
     },
     methods: {
         observeValue() {
-            const { value, currentValue } = this.data;
-            if (!equal(value, currentValue)) {
-                this.setData({ currentValue: this.format(value) });
-            }
+            const { value } = this.data;
+            this.setData({ currentValue: this.format(value) });
         },
         check() {
             const val = this.format(this.data.currentValue);
@@ -84,17 +87,18 @@ VantComponent({
             }
         },
         isDisabled(type) {
-            const { disabled, disablePlus, disableMinus, currentValue, max, min, } = this.data;
+            const { disabled, disablePlus, disableMinus, currentValue, max, min } = this.data;
             if (type === 'plus') {
-                return disabled || disablePlus || currentValue >= max;
+                return disabled || disablePlus || +currentValue >= +max;
             }
-            return disabled || disableMinus || currentValue <= min;
+            return disabled || disableMinus || +currentValue <= +min;
         },
         onFocus(event) {
             this.$emit('focus', event.detail);
         },
         onBlur(event) {
             const value = this.format(event.detail.value);
+            this.setData({ currentValue: value });
             this.emitChange(value);
             this.$emit('blur', Object.assign(Object.assign({}, event.detail), { value }));
         },
@@ -124,12 +128,7 @@ VantComponent({
             if (value === '') {
                 return;
             }
-            let formatted = this.filter(value);
-            // limit max decimal length
-            if (isDef(this.data.decimalLength) && formatted.indexOf('.') !== -1) {
-                const pair = formatted.split('.');
-                formatted = `${pair[0]}.${pair[1].slice(0, this.data.decimalLength)}`;
-            }
+            let formatted = this.format(value);
             this.emitChange(formatted);
         },
         emitChange(value) {

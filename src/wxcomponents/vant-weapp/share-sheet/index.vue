@@ -1,5 +1,5 @@
 <template>
-<uni-shadow-root class="vant-weapp-share-sheet-index"><van-popup round class="van-share-sheet" :show="show" position="bottom" :overlay="overlay" :duration="duration" :z-index="zIndex" :overlay-style="overlayStyle" :close-on-click-overlay="closeOnClickOverlay" :safe-area-inset-bottom="safeAreaInsetBottom" @close="onClose" @click-overlay="onClickOverlay">
+<uni-shadow-root class="vant-weapp-share-sheet-index"><van-popup round class="van-share-sheet" :show="show" position="bottom" :overlay="overlay" :duration="duration" :z-index="zIndex" :overlay-style="overlayStyle" :close-on-click-overlay="closeOnClickOverlay" :safe-area-inset-bottom="safeAreaInsetBottom" :root-portal="rootPortal" @close="onClose" @click-overlay="onClickOverlay">
   <view class="van-share-sheet__header">
     <view class="van-share-sheet__title">
       <slot name="title"></slot>
@@ -69,6 +69,10 @@ VantComponent({
         duration: {
             type: null,
             value: 300,
+        },
+        rootPortal: {
+            type: Boolean,
+            value: false,
         },
     },
     methods: {

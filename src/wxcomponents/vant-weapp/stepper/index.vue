@@ -3,7 +3,7 @@
   <view v-if="showMinus" data-type="minus" :style="computed.buttonStyle({ buttonSize })" :class="'minus-class '+(utils.bem('stepper__minus', { disabled: disabled || disableMinus || currentValue <= min }))" hover-class="van-stepper__minus--hover" hover-stay-time="70" @click="onTap" @touchstart="onTouchStart" @touchend="onTouchEnd">
     <slot name="minus"></slot>
   </view>
-  <input :type="integer ? 'number' : 'digit'" :class="'input-class '+(utils.bem('stepper__input', { disabled: disabled || disableInput }))" :style="computed.inputStyle({ buttonSize, inputWidth })" :value="currentValue" :focus="focus" :disabled="disabled || disableInput" @input="onInput" @focus="onFocus" @blur="onBlur"></input>
+  <input :type="integer ? 'number' : 'digit'" :class="'input-class '+(utils.bem('stepper__input', { disabled: disabled || disableInput }))" :style="computed.inputStyle({ buttonSize, inputWidth })" :value="currentValue" :focus="focus" :disabled="disabled || disableInput" :always-embed="alwaysEmbed" @input="onInput" @focus="onFocus" @blur="onBlur"></input>
   <view v-if="showPlus" data-type="plus" :style="computed.buttonStyle({ buttonSize })" :class="'plus-class '+(utils.bem('stepper__plus', { disabled: disabled || disablePlus || currentValue >= max }))" hover-class="van-stepper__plus--hover" hover-stay-time="70" @click="onTap" @touchstart="onTouchStart" @touchend="onTouchEnd">
     <slot name="plus"></slot>
   </view>
@@ -31,7 +31,6 @@ VantComponent({
     props: {
         value: {
             type: null,
-            observer: 'observeValue',
         },
         integer: {
             type: Boolean,
@@ -76,9 +75,15 @@ VantComponent({
             value: true,
         },
         theme: String,
+        alwaysEmbed: Boolean,
     },
     data: {
         currentValue: '',
+    },
+    watch: {
+        value() {
+            this.observeValue();
+        },
     },
     created() {
         this.setData({
@@ -87,10 +92,8 @@ VantComponent({
     },
     methods: {
         observeValue() {
-            const { value, currentValue } = this.data;
-            if (!equal(value, currentValue)) {
-                this.setData({ currentValue: this.format(value) });
-            }
+            const { value } = this.data;
+            this.setData({ currentValue: this.format(value) });
         },
         check() {
             const val = this.format(this.data.currentValue);
@@ -99,17 +102,18 @@ VantComponent({
             }
         },
         isDisabled(type) {
-            const { disabled, disablePlus, disableMinus, currentValue, max, min, } = this.data;
+            const { disabled, disablePlus, disableMinus, currentValue, max, min } = this.data;
             if (type === 'plus') {
-                return disabled || disablePlus || currentValue >= max;
+                return disabled || disablePlus || +currentValue >= +max;
             }
-            return disabled || disableMinus || currentValue <= min;
+            return disabled || disableMinus || +currentValue <= +min;
         },
         onFocus(event) {
             this.$emit('focus', event.detail);
         },
         onBlur(event) {
             const value = this.format(event.detail.value);
+            this.setData({ currentValue: value });
             this.emitChange(value);
             this.$emit('blur', Object.assign(Object.assign({}, event.detail), { value }));
         },
@@ -139,12 +143,7 @@ VantComponent({
             if (value === '') {
                 return;
             }
-            let formatted = this.filter(value);
-            // limit max decimal length
-            if (isDef(this.data.decimalLength) && formatted.indexOf('.') !== -1) {
-                const pair = formatted.split('.');
-                formatted = `${pair[0]}.${pair[1].slice(0, this.data.decimalLength)}`;
-            }
+            let formatted = this.format(value);
             this.emitChange(formatted);
         },
         emitChange(value) {

@@ -1,5 +1,5 @@
 <template>
-<uni-shadow-root class="vant-weapp-goods-action-button-index"><van-button :id="id" :lang="lang" :type="type" :color="color" :plain="plain" :loading="loading" :disabled="disabled" :open-type="openType" :class="utils.bem('goods-action-button', [type, { first: isFirst, last: isLast, plain: plain }])" custom-class="van-goods-action-button__inner" :business-id="businessId" :session-from="sessionFrom" :app-parameter="appParameter" :send-message-img="sendMessageImg" :send-message-path="sendMessagePath" :show-message-card="showMessageCard" :send-message-title="sendMessageTitle" @click="onClick" @error="onError" @contact="onContact" @opensetting="onOpenSetting" @getuserinfo="onGetUserInfo" @getphonenumber="onGetPhoneNumber" @launchapp="onLaunchApp">
+<uni-shadow-root class="vant-weapp-goods-action-button-index"><van-button :id="id" :button-id="buttonId" :lang="lang" :type="type" :size="size" :color="color" :plain="plain" :loading="loading" :disabled="disabled" :open-type="openType" :class="utils.bem('goods-action-button', [type, { first: isFirst, last: isLast, plain: plain }])" custom-class="van-goods-action-button__inner custom-class" :custom-style="customStyle" :business-id="businessId" :session-from="sessionFrom" :app-parameter="appParameter" :send-message-img="sendMessageImg" :send-message-path="sendMessagePath" :show-message-card="showMessageCard" :send-message-title="sendMessageTitle" @click="onClick" @error="onError" @contact="onContact" @opensetting="onOpenSetting" @getuserinfo="onGetUserInfo" @agreeprivacyauthorization="onAgreePrivacyAuthorization" @getRealTimePhoneNumber="onGetRealTimePhoneNumber" @getphonenumber="onGetPhoneNumber" @launchapp="onLaunchApp">
   {{ text }}
   <slot></slot>
 </van-button></uni-shadow-root>
@@ -20,12 +20,20 @@ VantComponent({
     props: {
         text: String,
         color: String,
+        size: {
+            type: String,
+            value: 'normal',
+        },
         loading: Boolean,
         disabled: Boolean,
         plain: Boolean,
         type: {
             type: String,
             value: 'danger',
+        },
+        customStyle: {
+            type: String,
+            value: '',
         },
     },
     methods: {

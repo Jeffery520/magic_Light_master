@@ -1,5 +1,5 @@
 <template>
-<uni-shadow-root class="vant-weapp-calendar-index"><van-popup v-if="poppable" :custom-class="'van-calendar__popup--'+(position)" close-icon-class="van-calendar__close-icon" :show="show" :round="round" :position="position" :closeable="showTitle || showSubtitle" :close-on-click-overlay="closeOnClickOverlay" @enter="onOpen" @close="onClose" @after-enter="onOpened" @after-leave="onClosed">
+<uni-shadow-root class="vant-weapp-calendar-index"><van-popup v-if="poppable" :custom-class="'van-calendar__popup--'+(position)" close-icon-class="van-calendar__close-icon" :show="show" :round="round" :position="position" :closeable="showTitle || showSubtitle" :close-on-click-overlay="closeOnClickOverlay" :safe-area-inset-bottom="safeAreaInsetBottom" :root-portal="rootPortal" @enter="onOpen" @close="onClose" @after-enter="onOpened" @after-leave="onClosed">
   <include src="./calendar.wxml"></include>
 </van-popup>
 
@@ -63,6 +63,7 @@ VantComponent({
         },
         defaultDate: {
             type: null,
+            value: getToday().getTime(),
             observer(val) {
                 this.setData({ currentDate: val });
                 this.scrollIntoView();
@@ -126,16 +127,32 @@ VantComponent({
             type: null,
             value: null,
         },
+        minRange: {
+            type: Number,
+            value: 1,
+        },
         firstDayOfWeek: {
             type: Number,
             value: 0,
         },
         readonly: Boolean,
+        rootPortal: {
+            type: Boolean,
+            value: false,
+        },
     },
     data: {
         subtitle: '',
         currentDate: null,
         scrollIntoView: '',
+    },
+    watch: {
+        minDate() {
+            this.initRect();
+        },
+        maxDate() {
+            this.initRect();
+        },
     },
     created() {
         this.setData({
@@ -150,7 +167,7 @@ VantComponent({
     },
     methods: {
         reset() {
-            this.setData({ currentDate: this.getInitialDate() });
+            this.setData({ currentDate: this.getInitialDate(this.data.defaultDate) });
             this.scrollIntoView();
         },
         initRect() {
@@ -182,15 +199,19 @@ VantComponent({
             return date;
         },
         getInitialDate(defaultDate = null) {
-            const { type, minDate, maxDate } = this.data;
+            const { type, minDate, maxDate, allowSameDay } = this.data;
+            if (!defaultDate)
+                return [];
             const now = getToday().getTime();
             if (type === 'range') {
                 if (!Array.isArray(defaultDate)) {
                     defaultDate = [];
                 }
                 const [startDay, endDay] = defaultDate || [];
-                const start = this.limitDateRange(startDay || now, minDate, getPrevDay(new Date(maxDate)).getTime());
-                const end = this.limitDateRange(endDay || now, getNextDay(new Date(minDate)).getTime());
+                const startDate = getTime(startDay || now);
+                const start = this.limitDateRange(startDate, minDate, allowSameDay ? startDate : getPrevDay(new Date(maxDate)).getTime());
+                const date = getTime(endDay || now);
+                const end = this.limitDateRange(date, allowSameDay ? date : getNextDay(new Date(minDate)).getTime());
                 return [start, end];
             }
             if (type === 'multiple') {
@@ -207,6 +228,8 @@ VantComponent({
         scrollIntoView() {
             requestAnimationFrame(() => {
                 const { currentDate, type, show, poppable, minDate, maxDate } = this.data;
+                if (!currentDate)
+                    return;
                 // @ts-ignore
                 const targetDate = type === 'single' ? currentDate : currentDate[0];
                 const displayed = show || !poppable;
@@ -263,7 +286,7 @@ VantComponent({
                         this.select([date, null]);
                     }
                     else if (allowSameDay) {
-                        this.select([date, date]);
+                        this.select([date, date], true);
                     }
                 }
                 else {
@@ -361,5 +384,5 @@ VantComponent({
 export default global['__wxComponents']['vant-weapp/calendar/index']
 </script>
 <style platform="mp-weixin">
-@import '../common/index.css';.van-calendar{background-color:var(--calendar-background-color,#fff);display:flex;flex-direction:column;height:var(--calendar-height,100%)}.van-calendar__close-icon{top:11px}.van-calendar__popup--bottom,.van-calendar__popup--top{height:var(--calendar-popup-height,80%)}.van-calendar__popup--left,.van-calendar__popup--right{height:100%}.van-calendar__body{-webkit-overflow-scrolling:touch;flex:1;overflow:auto}.van-calendar__footer{flex-shrink:0;padding:0 var(--padding-md,16px)}.van-calendar__footer--safe-area-inset-bottom{padding-bottom:env(safe-area-inset-bottom)}.van-calendar__footer+.van-calendar__footer,.van-calendar__footer:empty{display:none}.van-calendar__footer:empty+.van-calendar__footer{display:block!important}.van-calendar__confirm{height:var(--calendar-confirm-button-height,36px)!important;line-height:var(--calendar-confirm-button-line-height,34px)!important;margin:var(--calendar-confirm-button-margin,7px 0)!important}
+@import '../common/index.css';.van-calendar{background-color:var(--calendar-background-color,#fff);display:flex;flex-direction:column;height:var(--calendar-height,100%)}.van-calendar__close-icon{top:11px}.van-calendar__popup--bottom,.van-calendar__popup--top{height:var(--calendar-popup-height,90%)}.van-calendar__popup--left,.van-calendar__popup--right{height:100%}.van-calendar__body{-webkit-overflow-scrolling:touch;flex:1;overflow:auto}.van-calendar__footer{flex-shrink:0;padding:0 var(--padding-md,16px)}.van-calendar__footer--safe-area-inset-bottom{padding-bottom:env(safe-area-inset-bottom)}.van-calendar__footer+.van-calendar__footer,.van-calendar__footer:empty{display:none}.van-calendar__footer:empty+.van-calendar__footer{display:block!important}.van-calendar__confirm{height:var(--calendar-confirm-button-height,36px)!important;line-height:var(--calendar-confirm-button-line-height,34px)!important;margin:var(--calendar-confirm-button-margin,7px 0)!important}
 </style>

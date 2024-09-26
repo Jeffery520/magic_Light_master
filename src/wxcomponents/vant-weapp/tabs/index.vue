@@ -1,12 +1,12 @@
 <template>
-<uni-shadow-root class="vant-weapp-tabs-index"><view :class="'custom-class '+(utils.bem('tabs', [type]))">
+<uni-shadow-root class="vant-weapp-tabs-index"><view :class="'custom-class '+(utils.bem('tabs'))">
   <van-sticky :disabled="(!sticky)" :z-index="zIndex" :offset-top="offsetTop" :container="container" @scroll="onTouchScroll">
-    <view :class="(utils.bem('tabs__wrap', { scrollable }))+' '+(type === 'line' && border ? 'van-hairline--top-bottom' : '')">
+    <view :class="(utils.bem('tabs--') + type)+' '+(utils.bem('tabs__wrap', { scrollable }))+' '+(type === 'line' && border ? 'van-hairline--top-bottom' : '')+' wrap-class'">
       <slot name="nav-left"></slot>
 
       <scroll-view :scroll-x="scrollable" :scroll-with-animation="scrollWithAnimation" :scroll-left="scrollLeft" :class="utils.bem('tabs__scroll', [type])" :style="color ? 'border-color: ' + color : ''">
         <view :class="(utils.bem('tabs__nav', [type, { complete: !ellipsis }]))+' nav-class'" :style="computed.navStyle(color, type)">
-          <view v-if="type === 'line'" class="van-tabs__line" :style="computed.lineStyle({ color, lineOffsetLeft, lineHeight, skipTransition, duration, lineWidth })"></view>
+          <view v-if="type === 'line'" class="van-tabs__line" :style="computed.lineStyle({ color, lineOffsetLeft, lineHeight, skipTransition, duration, lineWidth, inited })"></view>
           <view v-for="(item,index) in (tabs)" :key="item.index" :data-index="index" :class="(computed.tabClass(index === currentIndex, ellipsis))+' '+(utils.bem('tab', { active: index === currentIndex, disabled: item.disabled, complete: !ellipsis }))" :style="computed.tabStyle({ active: index === currentIndex, ellipsis, color, type, disabled: item.disabled, titleActiveColor, titleInactiveColor, swipeThreshold, scrollable })" @click="onTap">
             <view :class="ellipsis ? 'van-ellipsis' : ''" :style="item.titleStyle">
               {{ item.title }}
@@ -41,7 +41,13 @@ import { isDef } from '../common/validator';
 import { useChildren } from '../common/relation';
 VantComponent({
     mixins: [touch],
-    classes: ['nav-class', 'tab-class', 'tab-active-class', 'line-class'],
+    classes: [
+        'nav-class',
+        'tab-class',
+        'tab-active-class',
+        'line-class',
+        'wrap-class',
+    ],
     relation: useChildren('tab', function () {
         this.updateTabs();
     }),
@@ -109,6 +115,10 @@ VantComponent({
             type: Boolean,
             value: true,
         },
+        useBeforeChange: {
+            type: Boolean,
+            value: false,
+        },
     },
     data: {
         tabs: [],
@@ -119,6 +129,7 @@ VantComponent({
         skipTransition: true,
         scrollWithAnimation: false,
         lineOffsetLeft: 0,
+        inited: false,
     },
     mounted() {
         requestAnimationFrame(() => {
@@ -141,28 +152,25 @@ VantComponent({
         },
         trigger(eventName, child) {
             const { currentIndex } = this.data;
-            const currentChild = child || this.children[currentIndex];
-            if (!isDef(currentChild)) {
+            const data = this.getChildData(currentIndex, child);
+            if (!isDef(data)) {
                 return;
             }
-            this.$emit(eventName, {
-                index: currentChild.index,
-                name: currentChild.getComputedName(),
-                title: currentChild.data.title,
-            });
+            this.$emit(eventName, data);
         },
         onTap(event) {
             const { index } = event.currentTarget.dataset;
             const child = this.children[index];
             if (child.data.disabled) {
                 this.trigger('disabled', child);
+                return;
             }
-            else {
+            this.onBeforeChange(index).then(() => {
                 this.setCurrentIndex(index);
                 nextTick(() => {
                     this.trigger('click');
                 });
-            }
+            });
         },
         // correct the index of active tab
         setCurrentIndexByName(name) {
@@ -188,6 +196,9 @@ VantComponent({
                 });
             });
             if (currentIndex === data.currentIndex) {
+                if (!data.inited) {
+                    this.resize();
+                }
                 return;
             }
             const shouldEmitChange = data.currentIndex !== null;
@@ -227,12 +238,13 @@ VantComponent({
                     .reduce((prev, curr) => prev + curr.width, 0);
                 lineOffsetLeft +=
                     (rect.width - lineRect.width) / 2 + (ellipsis ? 0 : 8);
-                this.setData({ lineOffsetLeft });
+                this.setData({ lineOffsetLeft, inited: true });
                 this.swiping = true;
                 if (skipTransition) {
-                    nextTick(() => {
+                    // waiting transition end
+                    setTimeout(() => {
                         this.setData({ skipTransition: false });
-                    });
+                    }, this.data.duration);
                 }
             });
         },
@@ -266,6 +278,7 @@ VantComponent({
         onTouchStart(event) {
             if (!this.data.swipeable)
                 return;
+            this.swiping = true;
             this.touchStart(event);
         },
         onTouchMove(event) {
@@ -282,7 +295,7 @@ VantComponent({
             if (direction === 'horizontal' && offsetX >= minSwipeDistance) {
                 const index = this.getAvaiableTab(deltaX);
                 if (index !== -1) {
-                    this.setCurrentIndex(index);
+                    this.onBeforeChange(index).then(() => this.setCurrentIndex(index));
                 }
             }
             this.swiping = false;
@@ -301,10 +314,30 @@ VantComponent({
             }
             return -1;
         },
+        onBeforeChange(index) {
+            const { useBeforeChange } = this.data;
+            if (!useBeforeChange) {
+                return Promise.resolve();
+            }
+            return new Promise((resolve, reject) => {
+                this.$emit('before-change', Object.assign(Object.assign({}, this.getChildData(index)), { callback: (status) => (status ? resolve() : reject()) }));
+            });
+        },
+        getChildData(index, child) {
+            const currentChild = child || this.children[index];
+            if (!isDef(currentChild)) {
+                return;
+            }
+            return {
+                index: currentChild.index,
+                name: currentChild.getComputedName(),
+                title: currentChild.data.title,
+            };
+        },
     },
 });
 export default global['__wxComponents']['vant-weapp/tabs/index']
 </script>
 <style platform="mp-weixin">
-@import '../common/index.css';.van-tabs{-webkit-tap-highlight-color:transparent;position:relative}.van-tabs__wrap{display:flex;overflow:hidden}.van-tabs__wrap--scrollable .van-tab{flex:0 0 22%}.van-tabs__wrap--scrollable .van-tab--complete{flex:1 0 auto!important;padding:0 12px}.van-tabs__wrap--scrollable .van-tabs__nav--complete{padding-left:8px;padding-right:8px}.van-tabs__scroll{background-color:var(--tabs-nav-background-color,#fff)}.van-tabs__scroll--line{box-sizing:initial;height:calc(100% + 15px)}.van-tabs__scroll--card{border:1px solid var(--tabs-default-color,#ee0a24);border-radius:2px;box-sizing:border-box;margin:0 var(--padding-md,16px);width:calc(100% - var(--padding-md, 16px)*2)}.van-tabs__scroll::-webkit-scrollbar{display:none}.van-tabs__nav{display:flex;position:relative;-webkit-user-select:none;user-select:none}.van-tabs__nav--card{box-sizing:border-box;height:var(--tabs-card-height,30px)}.van-tabs__nav--card .van-tab{border-right:1px solid var(--tabs-default-color,#ee0a24);color:var(--tabs-default-color,#ee0a24);line-height:calc(var(--tabs-card-height, 30px) - 2px)}.van-tabs__nav--card .van-tab:last-child{border-right:none}.van-tabs__nav--card .van-tab.van-tab--active{background-color:var(--tabs-default-color,#ee0a24);color:#fff}.van-tabs__nav--card .van-tab--disabled{color:var(--tab-disabled-text-color,#c8c9cc)}.van-tabs__line{background-color:var(--tabs-bottom-bar-color,#ee0a24);border-radius:var(--tabs-bottom-bar-height,3px);bottom:0;height:var(--tabs-bottom-bar-height,3px);left:0;position:absolute;z-index:1}.van-tabs__track{height:100%;position:relative;width:100%}.van-tabs__track--animated{display:flex;transition-property:left}.van-tabs__content{overflow:hidden}.van-tabs--line .van-tabs__wrap{height:var(--tabs-line-height,44px)}.van-tabs--card .van-tabs__wrap{height:var(--tabs-card-height,30px)}.van-tab{box-sizing:border-box;color:var(--tab-text-color,#646566);cursor:pointer;flex:1;font-size:var(--tab-font-size,14px);line-height:var(--tabs-line-height,44px);min-width:0;padding:0 5px;position:relative;text-align:center}.van-tab--active{color:var(--tab-active-text-color,#323233);font-weight:var(--font-weight-bold,500)}.van-tab--disabled{color:var(--tab-disabled-text-color,#c8c9cc)}.van-tab__title__info{display:inline-block;position:relative!important;top:-1px!important;transform:translateX(0)!important}
+@import '../common/index.css';.van-tabs{-webkit-tap-highlight-color:transparent;position:relative}.van-tabs__wrap{display:flex;overflow:hidden}.van-tabs__wrap--scrollable .van-tab{flex:0 0 22%}.van-tabs__wrap--scrollable .van-tab--complete{flex:1 0 auto!important;padding:0 12px}.van-tabs__wrap--scrollable .van-tabs__nav--complete{padding-left:8px;padding-right:8px}.van-tabs__scroll{background-color:var(--tabs-nav-background-color,#fff);overflow:auto}.van-tabs__scroll--line{box-sizing:initial;height:calc(100% + 15px)}.van-tabs__scroll--card{border:1px solid var(--tabs-default-color,#ee0a24);border-radius:2px;box-sizing:border-box;margin:0 var(--padding-md,16px);width:calc(100% - var(--padding-md, 16px)*2)}.van-tabs__scroll::-webkit-scrollbar{display:none}.van-tabs__nav{display:flex;position:relative;-webkit-user-select:none;user-select:none}.van-tabs__nav--card{box-sizing:border-box;height:var(--tabs-card-height,30px)}.van-tabs__nav--card .van-tab{border-right:1px solid var(--tabs-default-color,#ee0a24);color:var(--tabs-default-color,#ee0a24);line-height:calc(var(--tabs-card-height, 30px) - 2px)}.van-tabs__nav--card .van-tab:last-child{border-right:none}.van-tabs__nav--card .van-tab.van-tab--active{background-color:var(--tabs-default-color,#ee0a24);color:#fff}.van-tabs__nav--card .van-tab--disabled{color:var(--tab-disabled-text-color,#c8c9cc)}.van-tabs__line{background-color:var(--tabs-bottom-bar-color,#ee0a24);border-radius:var(--tabs-bottom-bar-height,3px);bottom:0;height:var(--tabs-bottom-bar-height,3px);left:0;opacity:0;position:absolute;z-index:1}.van-tabs__track{height:100%;position:relative;width:100%}.van-tabs__track--animated{display:flex;transition-property:left}.van-tabs__content{overflow:hidden}.van-tabs--line{height:var(--tabs-line-height,44px)}.van-tabs--card{height:var(--tabs-card-height,30px)}.van-tab{box-sizing:border-box;color:var(--tab-text-color,#646566);cursor:pointer;flex:1;font-size:var(--tab-font-size,14px);line-height:var(--tabs-line-height,44px);min-width:0;padding:0 5px;position:relative;text-align:center}.van-tab--active{color:var(--tab-active-text-color,#323233);font-weight:var(--font-weight-bold,500)}.van-tab--disabled{color:var(--tab-disabled-text-color,#c8c9cc)}.van-tab__title__info{position:relative!important;top:-1px!important;transform:translateX(0)!important}
 </style>

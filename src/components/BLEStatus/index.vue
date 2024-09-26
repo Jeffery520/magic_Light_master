@@ -569,22 +569,20 @@ export default {
 				JSON.stringify(sendMsg)
 			);
 
-			// // sendTime 为空说明未发送指令
-			// // sendTime 距离发送指令时间超过600m秒，说明指令已超时
-			// if (
-			// 	!sendTime ||
-			// 	(sendTime && new Date().getTime() - sendTime > 600) ||
-			// 	isFailed
-			// ) {
-			// 	// 指令设置失败
-			// 	Toast('设置失败');
-			// 	uni.$emit('setCallback', { status: 0, data: zoneData });
-			// }
-			//
-			// // 指令设置成功
-			// if (isSuccess) {
-			// 	uni.$emit('setCallback', { status: 1, data: zoneData });
-			// }
+			// sendTime 为空说明未发送指令
+			// sendTime 距离发送指令时间超过600m秒，说明指令已超时
+			if (
+				!sendTime ||
+				(sendTime && new Date().getTime() - sendTime > 600) ||
+				isFailed
+			) {
+				uni.$emit('setCallback', { status: 0, data: zoneData });
+			}
+
+			// 指令设置成功
+			if (isSuccess) {
+				uni.$emit('setCallback', { status: 1, data: zoneData });
+			}
 		},
 		_checkMessage(aHexStr, qHexArr, disTime) {
 			const qHexArr2 = (qHexArr || []).map((s) => s.toUpperCase());
@@ -609,7 +607,7 @@ export default {
 
 					// 情景模式、人群模式、心情模式
 					if (['01', '02', '04'].includes(data2)) {
-						target.mode2 = data3;
+						target[`_mode${data2}`] = data3;
 					}
 
 					// 单色模式
@@ -625,6 +623,7 @@ export default {
 							humidity: hexToNumber(data4)
 						};
 					}
+
 					// 爆闪模式
 					if (data1 === '05') {
 						target.value5 = hexToNumber(data3);
@@ -757,7 +756,6 @@ export default {
 				}
 			}
 		}),
-
 		_discoveryFn() {
 			ecBLE.startBluetoothDevicesDiscovery(
 				this.bleNames,

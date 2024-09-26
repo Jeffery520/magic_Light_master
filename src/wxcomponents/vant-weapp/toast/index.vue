@@ -1,7 +1,7 @@
 <template>
 <uni-shadow-root class="vant-weapp-toast-index"><van-overlay v-if="mask || forbidClick" :show="show" :z-index="zIndex" :custom-style="mask ? '' : 'background-color: transparent;'"></van-overlay>
 <van-transition :show="show" :custom-style="'z-index: '+(zIndex)" custom-class="van-toast__container">
-  <view :class="'van-toast van-toast--'+(type === 'success'||type === 'fail'||type === 'loading' ? 'icon' : 'text')+' van-toast--'+(position)" @touchmove.stop.prevent="noop">
+  <view :class="'van-toast van-toast--'+((type === 'text' || type === 'html') ? 'text' : 'icon')+' van-toast--'+(position)" @touchmove.stop.prevent="noop">
     
     <text v-if="type === 'text'">{{ message }}</text>
 

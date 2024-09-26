@@ -1,5 +1,5 @@
 <template>
-<uni-shadow-root class="vant-weapp-action-sheet-index"><van-popup :show="show" position="bottom" :round="round" :z-index="zIndex" :overlay="overlay" custom-class="van-action-sheet" :safe-area-inset-bottom="safeAreaInsetBottom" :close-on-click-overlay="closeOnClickOverlay" @close="onClickOverlay">
+<uni-shadow-root class="vant-weapp-action-sheet-index"><van-popup :show="show" position="bottom" :round="round" :z-index="zIndex" :overlay="overlay" custom-class="van-action-sheet custom-class" :safe-area-inset-bottom="safeAreaInsetBottom" :close-on-click-overlay="closeOnClickOverlay" :root-portal="rootPortal" @close="onClickOverlay">
   <view v-if="title" class="van-action-sheet__header">
     {{ title }}
     <van-icon name="cross" custom-class="van-action-sheet__close" @click="onClose"></van-icon>
@@ -7,7 +7,7 @@
   <view v-if="description" class="van-action-sheet__description van-hairline--bottom">
     {{ description }}
   </view>
-  <view v-if="actions && actions.length">
+  <view v-if="actions && actions.length" class="list-class">
     
     <button v-for="(item,index) in (actions)" :key="item.index" :open-type="item.disabled || item.loading || (canIUseGetUserProfile && item.openType === 'getUserInfo') ? '' : item.openType" :style="item.color ? 'color: ' + item.color : ''" :class="(utils.bem('action-sheet__item', { disabled: item.disabled || item.loading }))+' '+(item.className || '')" hover-class="van-action-sheet__item--hover" :data-index="index" @click="_$self[(item.disabled || item.loading ? '' : 'onSelect')||'_$noop']($event)" @getuserinfo="onGetUserInfo" @contact="onContact" @getphonenumber="onGetPhoneNumber" @error="onError" @launchapp="onLaunchApp" @opensetting="onOpenSetting" :lang="lang" :session-from="sessionFrom" :send-message-title="sendMessageTitle" :send-message-path="sendMessagePath" :send-message-img="sendMessageImg" :show-message-card="showMessageCard" :app-parameter="appParameter">
       <block v-if="(!item.loading)">
@@ -37,6 +37,7 @@ global['__wxRoute'] = 'vant-weapp/action-sheet/index'
 import { VantComponent } from '../common/component';
 import { button } from '../mixins/button';
 VantComponent({
+    classes: ['list-class'],
     mixins: [button],
     props: {
         show: Boolean,
@@ -70,6 +71,10 @@ VantComponent({
         safeAreaInsetBottom: {
             type: Boolean,
             value: true,
+        },
+        rootPortal: {
+            type: Boolean,
+            value: false,
         },
     },
     methods: {

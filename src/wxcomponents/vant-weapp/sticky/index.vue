@@ -68,10 +68,8 @@ VantComponent({
             }
             this.scrollTop = scrollTop || this.scrollTop;
             if (typeof container === 'function') {
-                Promise.all([
-                    getRect(this, ROOT_ELEMENT),
-                    this.getContainerRect(),
-                ]).then(([root, container]) => {
+                Promise.all([getRect(this, ROOT_ELEMENT), this.getContainerRect()])
+                    .then(([root, container]) => {
                     if (offsetTop + root.height > container.height + container.top) {
                         this.setDataAfterDiff({
                             fixed: false,
@@ -88,11 +86,12 @@ VantComponent({
                     else {
                         this.setDataAfterDiff({ fixed: false, transform: 0 });
                     }
-                });
+                })
+                    .catch(() => { });
                 return;
             }
             getRect(this, ROOT_ELEMENT).then((root) => {
-                if (!isDef(root)) {
+                if (!isDef(root) || (!root.width && !root.height)) {
                     return;
                 }
                 if (offsetTop >= root.top) {
@@ -123,6 +122,9 @@ VantComponent({
         },
         getContainerRect() {
             const nodesRef = this.data.container();
+            if (!nodesRef) {
+                return Promise.reject(new Error('not found container'));
+            }
             return new Promise((resolve) => nodesRef.boundingClientRect(resolve).exec());
         },
     },

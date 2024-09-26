@@ -1,6 +1,6 @@
 <template>
 <uni-shadow-root class="vant-weapp-collapse-item-index"><view :class="'van-collapse-item custom-class '+(index !== 0 ? 'van-hairline--top' : '')">
-  <van-cell :title="title" title-class="title-class" :icon="icon" :value="value" :label="label" :is-link="isLink" :clickable="clickable" :border="border && expanded" :class="utils.bem('collapse-item__title', { disabled, expanded })" right-icon-class="van-cell__right-icon" custom-class="van-cell" hover-class="van-cell--hover" @click="onClick">
+  <van-cell :size="size" :title="title" title-class="title-class" :icon="icon" :value="value" :label="label" :is-link="isLink" :clickable="clickable" :border="border && expanded" :class="utils.bem('collapse-item__title', { disabled, expanded })" right-icon-class="van-cell__right-icon" custom-class="van-cell" hover-class="van-cell--hover" @click="onClick">
     <slot name="title" slot="title"></slot>
     <slot name="icon" slot="icon"></slot>
     <slot name="value"></slot>
@@ -26,6 +26,7 @@ VantComponent({
     classes: ['title-class', 'content-class'],
     relation: useParent('collapse'),
     props: {
+        size: String,
         name: null,
         title: null,
         value: null,

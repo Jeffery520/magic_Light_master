@@ -13,9 +13,9 @@
   </view>
 
   <view :class="utils.bem('calendar__footer', { safeAreaInsetBottom })">
-    <van-button v-if="showConfirm" round block type="danger" :color="color" custom-class="van-calendar__confirm" :disabled="computed.getButtonDisabled(type, currentDate)" nativeType="text" @click="onConfirm">
+    <van-button v-if="showConfirm" round block type="danger" :color="color" custom-class="van-calendar__confirm" :disabled="computed.getButtonDisabled(type, currentDate, minRange)" nativeType="text" @click="onConfirm">
       {{
-        computed.getButtonDisabled(type, currentDate)
+        computed.getButtonDisabled(type, currentDate, minRange)
           ? confirmDisabledText
           : confirmText
       }}
@@ -23,7 +23,7 @@
   </view>
 </view></uni-shadow-root>
 </template>
-
+<wxs src="./index.wxs" module="computed"></wxs><wxs src="../wxs/utils.wxs" module="utils"></wxs>
 <script>
 
 global['__wxRoute'] = 'vant-weapp/calendar/calendar'

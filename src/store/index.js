@@ -11,7 +11,9 @@ const zoneDataA = [
 		code: '01',
 		name: '自定义分区名',
 		mode: '00',
-		mode2: '00',
+		_mode01: '00', // 情景模式
+		_mode02: '00', // 闪烁频率
+		_mode04: '00', // 闪烁频率
 		value1: '50', // 灯光数量
 		value2: '10', // 亮度
 		value3: '00', // 呼吸节奏
@@ -58,7 +60,9 @@ const zoneDataA = [
 		code: '02',
 		name: '自定义分区名',
 		mode: '00',
-		mode2: '00',
+		_mode01: '00', // 情景模式
+		_mode02: '00', // 闪烁频率
+		_mode04: '00', // 闪烁频率
 		value1: '50', // 灯光数量
 		value2: '10', // 亮度
 		value3: '00', // 呼吸节奏
@@ -105,7 +109,9 @@ const zoneDataA = [
 		code: '03',
 		name: '自定义分区名',
 		mode: '00',
-		mode2: '00',
+		_mode01: '00', // 情景模式
+		_mode02: '00', // 闪烁频率
+		_mode04: '00', // 闪烁频率
 		value1: '50', // 灯光数量
 		value2: '10', // 亮度
 		value3: '00', // 呼吸节奏

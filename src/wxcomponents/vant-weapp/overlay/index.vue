@@ -1,15 +1,18 @@
 <template>
-<uni-shadow-root class="vant-weapp-overlay-index"><van-transition v-if="lockScroll" :show="show" custom-class="van-overlay" :custom-style="'z-index: '+(zIndex)+'; '+(customStyle)" :duration="duration" @click.native="onClick" @touchmove.native.stop.prevent="noop">
-  <slot></slot>
-</van-transition>
-<van-transition v-else :show="show" custom-class="van-overlay" :custom-style="'z-index: '+(zIndex)+'; '+(customStyle)" :duration="duration" @click.native="onClick">
-  <slot></slot>
-</van-transition></uni-shadow-root>
+<uni-shadow-root class="vant-weapp-overlay-index"><root-portal v-if="rootPortal">
+  <include src="./overlay.wxml"></include>
+</root-portal>
+
+<include v-else src="./overlay.wxml"></include></uni-shadow-root>
 </template>
 
 <script>
+
+const __wxTemplateComponentProps = {}
+import __wxTemplateComponent0 from './overlay.vue'
+
 import VanTransition from '../transition/index.vue'
-global['__wxVueOptions'] = {components:{'van-transition': VanTransition}}
+global['__wxVueOptions'] = {components:{'van-transition': VanTransition,}}
 
 global['__wxRoute'] = 'vant-weapp/overlay/index'
 import { VantComponent } from '../common/component';
@@ -28,6 +31,10 @@ VantComponent({
         lockScroll: {
             type: Boolean,
             value: true,
+        },
+        rootPortal: {
+            type: Boolean,
+            value: false,
         },
     },
     methods: {

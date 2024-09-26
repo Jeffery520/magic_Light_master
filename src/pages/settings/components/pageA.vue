@@ -87,9 +87,9 @@
 			class="mode_list_wrap"
 		>
 			<van-radio-group
-				v-model="setZoneData.mode2"
+				:value="setZoneData[`_mode${currentModel}`]"
 				placement="row"
-				@change="model2Change"
+				@change="model2Change($event, `_mode${currentModel}`)"
 				activeColor="#07C160"
 				inactiveColor="#464849"
 			>
@@ -98,11 +98,16 @@
 					:key="index"
 					:name="index"
 					use-icon-slot
+					@click="onRadioClick(item.code, `_mode${currentModel}`)"
 				>
 					<image
 						slot="icon"
 						mode="aspectFit"
-						:src="setZoneData.mode2 === item.code ? radioIcon2 : radioIcon1"
+						:src="
+							setZoneData[`_mode${currentModel}`] === item.code
+								? radioIcon2
+								: radioIcon1
+						"
 					/>
 					<view class="radio_label">{{ item.name }}</view>
 				</van-radio>
@@ -246,7 +251,6 @@
 <script>
 import WeatherTool from '@/components/Weather/index.vue';
 import ColorPicker from '@/components/ColorPicker/index.vue';
-import util from '@/components/ColorPicker/util.js';
 import ecBLE from '@/utils/ecBLE.js';
 import radioIcon1 from '@/static/images/radio_icon_1.png';
 import radioIcon2 from '@/static/images/radio_icon_2.png';
@@ -304,19 +308,45 @@ export default {
 			this.zoneIndex = index;
 			this.currentModel = this.zoneDataA[index].mode;
 			this.setZoneData = this.zoneDataA[index];
+
+			const code1 = `${this.setZoneData.mode}`.padStart(2, '0');
+
+			if (['01', '02', '04'].includes(code1)) {
+				this._sendModelMode();
+			}
+			if (['00'].includes(code1)) {
+				this._sendModelColor();
+			}
+			if (['03'].includes(code1)) {
+				this._sendModelWeather();
+			}
+			if (['05'].includes(code1)) {
+				this._sendModelRhythm();
+			}
 		},
 		// 模式切换
 		modelChange(code) {
 			uni.vibrateShort();
-			const code1 = code;
-
+			const code1 = `${code}`.padStart(2, '0');
 			this.currentModel = code1;
-			this.setZoneData.mode = code1;
-			if (['01', '02', '04'].includes(code1)) {
-				this.setZoneData.mode2 = '00';
-			}
 
-			this._sendModelMode();
+			this.setZoneData = {
+				...this.setZoneData,
+				mode: code1
+			};
+
+			if (['01', '02', '04'].includes(code1)) {
+				this._sendModelMode();
+			}
+			if (['00'].includes(code1)) {
+				this._sendModelColor();
+			}
+			if (['03'].includes(code1)) {
+				this._sendModelWeather();
+			}
+			if (['05'].includes(code1)) {
+				this._sendModelRhythm();
+			}
 		},
 		onSignalChange(event, index) {
 			uni.vibrateShort();
@@ -355,10 +385,20 @@ export default {
 				[code]: value
 			};
 		},
+		onRadioClick(value, code) {
+			this.setZoneData = {
+				...this.setZoneData,
+				[code]: `${value}`.padStart(2, '0')
+			};
+			this._sendModelMode();
+		},
 		// 模式设置
-		model2Change(event) {
+		model2Change(event, code) {
 			uni.vibrateShort();
-			this.setZoneData.mode2 = event.detail;
+			this.setZoneData = {
+				...this.setZoneData,
+				[code]: `${event.detail}`.padStart(2, '0')
+			};
 			this._sendModelMode();
 		},
 		// 单色模式
@@ -418,7 +458,7 @@ export default {
 			const msg = ['86', '06', data0, data1, data2, data3, data4, data5]
 				.map((item) => `${item}`.padStart(2, '0'))
 				.join('');
-
+			console.log('发送颜色设置========', msg);
 			this._checkBleState(() => {
 				this._easySendData(msg, true, {
 					data0,
@@ -443,6 +483,8 @@ export default {
 				.map((item) => `${item}`.padStart(2, '0'))
 				.join('');
 
+			console.log('发送参数设置=========', msg);
+
 			this._checkBleState(() => {
 				this._easySendData(msg, true, { data0, data1, data2, data3, data4 });
 			});
@@ -450,11 +492,17 @@ export default {
 		// 发送模式设置
 		_sendModelMode() {
 			const data1 = '01'; // 0x00：参数设置 0x01：模式设置
-			const { code: data0, mode: data2, mode2: data3 } = this.setZoneData;
+			const { code: data0, mode: data2 } = this.setZoneData;
+			const data3 = this.setZoneData?.[`_mode${data2}`] || '';
+
+			if (!data3) return;
 
 			const msg = ['86', '06', data0, data1, data2, data3, 'ff', 'ff']
 				.map((item) => `${item}`.padStart(2, '0'))
 				.join('');
+
+			console.log('发送模式设置========', msg);
+
 			this._checkBleState(() => {
 				this._easySendData(msg, true, { data0, data1, data2, data3 });
 			});
@@ -469,6 +517,9 @@ export default {
 			const msg = ['86', '06', data0, data1, data2, data3, 'ff', 'ff']
 				.map((item) => `${item}`.padStart(2, '0'))
 				.join('');
+
+			console.log('爆闪模式设置=========', msg);
+
 			this._checkBleState(() => {
 				this._easySendData(msg, true, { data0, data1, data2, data3 });
 			});
@@ -479,11 +530,14 @@ export default {
 			const { code: data0, mode: data2, weather } = this.setZoneData;
 
 			const data3 = numberToHex(weather.humidity);
-			const data4 = numberToHex(weather.temperature);
+			const data4 = numberToHex(parseInt(weather.temperature) + 50);
 
 			const msg = ['86', '06', data0, data1, data2, data3, data4, 'ff']
 				.map((item) => `${item}`.padStart(2, '0'))
 				.join('');
+
+			console.log('发送天气模式设置=========', msg);
+
 			this._checkBleState(() => {
 				this._easySendData(msg, true, { data0, data1, data2, data3, data4 });
 			});
@@ -494,9 +548,14 @@ export default {
 
 			ecBLE.easySendData(msg, isHex, extraData);
 
+			uni.$off('setCallback');
 			uni.$on('setCallback', (res) => {
 				// 监听设置回调
-				console.log('setCallback======', res);
+				if (res.status) {
+					Toast('设置成功');
+				} else {
+					Toast('设置失败');
+				}
 			});
 		},
 		_checkBleState: debounce(function (cb, fail) {

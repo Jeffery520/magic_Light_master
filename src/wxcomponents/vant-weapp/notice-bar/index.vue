@@ -1,6 +1,6 @@
 <template>
 <uni-shadow-root class="vant-weapp-notice-bar-index"><view v-if="show" :class="'custom-class '+(utils.bem('notice-bar', { withicon: mode, wrapable }))" :style="computed.rootStyle({ color, backgroundColor, background })" @click="onClick">
-  <van-icon v-if="leftIcon" size="16px" :name="leftIcon" class="van-notice-bar__left-icon"></van-icon>
+  <van-icon v-if="leftIcon" :name="leftIcon" class="van-notice-bar__left-icon"></van-icon>
   <slot v-else name="left-icon"></slot>
 
   <view class="van-notice-bar__wrap">
@@ -104,17 +104,17 @@ VantComponent({
                             timingFunction: 'linear',
                             delay,
                         });
-                        this.scroll();
+                        this.scroll(true);
                     }
                 });
             });
         },
-        scroll() {
+        scroll(isInit = false) {
             this.timer && clearTimeout(this.timer);
             this.timer = null;
             this.setData({
                 animationData: this.resetAnimation
-                    .translateX(this.wrapWidth)
+                    .translateX(isInit ? 0 : this.wrapWidth)
                     .step()
                     .export(),
             });
@@ -128,7 +128,7 @@ VantComponent({
             });
             this.timer = setTimeout(() => {
                 this.scroll();
-            }, this.duration);
+            }, this.duration + this.data.delay);
         },
         onClickIcon(event) {
             if (this.data.mode === 'closeable') {

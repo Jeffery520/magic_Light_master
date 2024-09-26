@@ -1,7 +1,7 @@
 <template>
 <uni-shadow-root class="vant-weapp-dropdown-menu-index"><view class="van-dropdown-menu van-dropdown-menu--top-bottom custom-class">
   <view v-for="(item,index) in (itemListData)" :key="item.index" :data-index="index" :class="utils.bem('dropdown-menu__item', { disabled: item.disabled })" @click="onTitleTap">
-    <view :class="(item.titleClass)+' '+(utils.bem('dropdown-menu__title', { active: item.showPopup, down: item.showPopup === (direction === 'down') }))" :style="item.showPopup ? 'color:' + activeColor : ''">
+    <view :class="(item.titleClass)+' '+(utils.bem('dropdown-menu__title', { active: item.showPopup, down: item.showPopup === (direction === 'down') }))+' title-class'" :style="item.showPopup ? 'color:' + activeColor : ''">
       <view class="van-ellipsis">
         {{ computed.displayTitle(item) }}
       </view>
@@ -21,6 +21,7 @@ import { addUnit, getRect, getSystemInfoSync } from '../common/utils';
 let ARRAY = [];
 VantComponent({
     field: true,
+    classes: ['title-class'],
     relation: useChildren('dropdown-item', function () {
         this.updateItemListData();
     }),
@@ -47,6 +48,10 @@ VantComponent({
             type: String,
             value: 'down',
             observer: 'updateChildrenData',
+        },
+        safeAreaTabBar: {
+            type: Boolean,
+            value: false,
         },
         closeOnClickOverlay: {
             type: Boolean,
@@ -130,5 +135,5 @@ VantComponent({
 export default global['__wxComponents']['vant-weapp/dropdown-menu/index']
 </script>
 <style platform="mp-weixin">
-@import '../common/index.css';.van-dropdown-menu{background-color:var(--dropdown-menu-background-color,#fff);box-shadow:var(--dropdown-menu-box-shadow,0 2px 12px hsla(210,1%,40%,.12));display:flex;height:var(--dropdown-menu-height,50px);-webkit-user-select:none;user-select:none}.van-dropdown-menu__item{align-items:center;display:flex;flex:1;justify-content:center;min-width:0}.van-dropdown-menu__item:active{opacity:.7}.van-dropdown-menu__item--disabled:active{opacity:1}.van-dropdown-menu__item--disabled .van-dropdown-menu__title{color:var(--dropdown-menu-title-disabled-text-color,#969799)}.van-dropdown-menu__title{box-sizing:border-box;color:var(--dropdown-menu-title-text-color,#323233);font-size:var(--dropdown-menu-title-font-size,15px);line-height:var(--dropdown-menu-title-line-height,18px);max-width:100%;padding:var(--dropdown-menu-title-padding,0 8px);position:relative}.van-dropdown-menu__title:after{border-color:transparent transparent currentcolor currentcolor;border-style:solid;border-width:3px;content:"";margin-top:-5px;opacity:.8;position:absolute;right:-4px;top:50%;transform:rotate(-45deg)}.van-dropdown-menu__title--active{color:var(--dropdown-menu-title-active-text-color,#ee0a24)}.van-dropdown-menu__title--down:after{margin-top:-1px;transform:rotate(135deg)}
+@import '../common/index.css';.van-dropdown-menu{background-color:var(--dropdown-menu-background-color,#fff);box-shadow:var(--dropdown-menu-box-shadow,0 2px 12px hsla(210,1%,40%,.12));display:flex;height:var(--dropdown-menu-height,50px);-webkit-user-select:none;user-select:none}.van-dropdown-menu__item{align-items:center;display:flex;flex:1;justify-content:center;min-width:0}.van-dropdown-menu__item:active{opacity:.7}.van-dropdown-menu__item--disabled:active{opacity:1}.van-dropdown-menu__item--disabled .van-dropdown-menu__title{color:var(--dropdown-menu-title-disabled-text-color,#969799)}.van-dropdown-menu__title{box-sizing:border-box;color:var(--dropdown-menu-title-text-color,#323233);font-size:var(--dropdown-menu-title-font-size,15px);line-height:var(--dropdown-menu-title-line-height,18px);max-width:100%;padding:var(--dropdown-menu-title-padding,0 24px 0 8px);position:relative}.van-dropdown-menu__title:after{border-color:transparent transparent currentcolor currentcolor;border-style:solid;border-width:3px;content:"";margin-top:-5px;opacity:.8;position:absolute;right:11px;top:50%;transform:rotate(-45deg)}.van-dropdown-menu__title--active{color:var(--dropdown-menu-title-active-text-color,#ee0a24)}.van-dropdown-menu__title--down:after{margin-top:-1px;transform:rotate(135deg)}
 </style>

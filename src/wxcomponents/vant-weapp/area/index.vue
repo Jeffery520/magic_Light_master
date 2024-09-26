@@ -1,5 +1,5 @@
 <template>
-<uni-shadow-root class="vant-weapp-area-index"><van-picker class="van-area__picker" active-class="active-class" toolbar-class="toolbar-class" column-class="column-class" show-toolbar value-key="name" :title="title" :loading="loading" :columns="computed.displayColumns(columns, columnsNum)" :item-height="itemHeight" :visible-item-count="visibleItemCount" :cancel-button-text="cancelButtonText" :confirm-button-text="confirmButtonText" @change="onChange" @confirm="onConfirm" @cancel="onCancel"></van-picker></uni-shadow-root>
+<uni-shadow-root class="vant-weapp-area-index"><van-picker class="van-area__picker" active-class="active-class" toolbar-class="toolbar-class" column-class="column-class" :show-toolbar="showToolbar" value-key="name" :title="title" :loading="loading" :columns="computed.displayColumns(columns, columnsNum)" :item-height="itemHeight" :visible-item-count="visibleItemCount" :cancel-button-text="cancelButtonText" :confirm-button-text="confirmButtonText" @change="onChange" @confirm="onConfirm" @cancel="onCancel"></van-picker></uni-shadow-root>
 </template>
 <wxs src="./index.wxs" module="computed"></wxs>
 <script>
@@ -13,7 +13,10 @@ import { requestAnimationFrame } from '../common/utils';
 const EMPTY_CODE = '000000';
 VantComponent({
     classes: ['active-class', 'toolbar-class', 'column-class'],
-    props: Object.assign(Object.assign({}, pickerProps), { value: {
+    props: Object.assign(Object.assign({}, pickerProps), { showToolbar: {
+            type: Boolean,
+            value: true,
+        }, value: {
             type: String,
             observer(value) {
                 this.code = value;
