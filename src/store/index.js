@@ -173,7 +173,7 @@ const zoneModesA = [
 			{ name: '夜深放风', code: '02' },
 			{ name: '旅行打卡', code: '03' },
 			{ name: '疯狂跑单', code: '04' },
-			{ name: '疯狂跑单', code: '05' }
+			{ name: '买菜接娃', code: '05' }
 		]
 	},
 	{

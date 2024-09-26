@@ -5,11 +5,12 @@ import {
 } from '@/utils/format';
 import store from '@/store';
 import { cloneDeep } from 'lodash';
+import Toast from '@/wxcomponents/vant-weapp/toast/toast';
 
 let HEART_TIMER = null;
 let SEND_TIMER = null;
-let heartInterval = 1000 * 5;
-let msgInterval = 100 * 5;
+let heartInterval = 1000 * 3;
+let msgInterval = 1000 * 1;
 
 let servicesUUID = '0000FFF0';
 
@@ -408,19 +409,17 @@ const onBLEConnectionStateChange = (cb) => {
 			await onBLECharacteristicValueChange((msgStr, msgStrHex) => {
 				receiveDataValue = receiveDataValue + msgStr + '\r\n';
 
-				// 判断消息应答是否在3000ms内
+				// 判断消息应答是否在500ms内
 				const bleMsgQueue = store.getters.bleMsgQueue;
 				const bleMsgQueueLast = cloneDeep(bleMsgQueue?.at(-1) || {});
-
 				const { hexArr, time, isReply } = bleMsgQueueLast;
 
-				const disTime = time ? new Date().getTime() - time : -1;
-				const qHexArr = time && disTime <= 10000 ? hexArr : null;
+				const qHexArr =
+					time && new Date().getTime() - time <= msgInterval ? hexArr : null;
 
 				uni.$emit('receiveMsg', {
 					aHexStr: msgStrHex,
 					qHexArr,
-					disTime,
 					receiveDataValue
 				});
 
@@ -708,44 +707,73 @@ const writeBLECharacteristicValue = (data) => {
 	});
 };
 
-const easySendData = async (str, isHex = true, extraData = {}) => {
-	let sendMsg = {};
-	Object.keys(extraData).forEach((key) => {
-		sendMsg[key] = extraData[key].toUpperCase();
-	});
-
+const easySendData = async (str, isHex = true, interval = 200) => {
 	// 存储待发送消息
-	store.dispatch('setBleMsgQueueWait', [
-		{ str, isHex },
-		...store.getters.bleMsgQueueWait
-	]);
+	const isInQueue = store.getters.bleMsgQueueWait?.[0]?.str === str;
+
+	if (!isInQueue) {
+		store.dispatch('setBleMsgQueueWait', [
+			{ str, isHex },
+			...store.getters.bleMsgQueueWait
+		]);
+	}
 
 	clearInterval(SEND_TIMER);
 
-	SEND_TIMER = setInterval(() => {
+	SEND_TIMER = setInterval(async () => {
+		const bleData = store.getters.bleData;
 		const bleMsgQueue = store.getters.bleMsgQueue;
 		const bleMsgQueueWait = store.getters.bleMsgQueueWait;
-		const { time, isReply } = bleMsgQueue?.at(-1) || {};
 
+		const { time, isReply } = bleMsgQueue?.at(-1) || {};
 		const { str, isHex } = bleMsgQueueWait?.[0] || {};
+		const { hexArr, buffer } = getHexArrAndBuffer(str, isHex);
 
 		if (!bleMsgQueueWait.length) {
+			Toast.clear();
+			clearInterval(SEND_TIMER);
+			return;
+		}
+
+		if (!bleData?.connected) {
+			Toast('蓝牙已断开');
 			clearInterval(SEND_TIMER);
 			return;
 		}
 
 		// 判断消息应答是否在500ms内
-		if (
-			!time ||
-			isReply ||
-			(time && new Date().getTime() - time >= msgInterval)
-		) {
-			_writeBleMsgFn(str, isHex);
-		}
-	}, 200);
+		const isFail =
+			!isReply && time && new Date().getTime() - time >= msgInterval;
+		const canSend =
+			!time || isReply || (time && new Date().getTime() - time >= msgInterval);
 
-	function _writeBleMsgFn(str, isHex = true) {
-		const bleMsgQueueWait = store.getters.bleMsgQueueWait;
+		if (isFail) {
+			uni.$emit('onSendMsgFail', bleMsgQueue?.at(-1));
+		}
+
+		if (canSend) {
+			console.log('发送指令 >>>>>>>>>>>>>>>>>>>>>>:', hexArr.join(' '));
+
+			// 记录本次发送消息
+			store.dispatch('addBleMsgQueue', {
+				str,
+				hexArr,
+				isReply: false,
+				time: new Date().getTime()
+			});
+
+			await writeBLECharacteristicValue(buffer);
+
+			// 发送完毕后，删除队列第一个元素
+			const bleMsgQueueWait2 = bleMsgQueueWait.slice(1);
+			store.dispatch('setBleMsgQueueWait', bleMsgQueueWait2);
+		}
+	}, interval);
+
+	function getHexArrAndBuffer(str, isHex) {
+		if (!str) {
+			return { hexStr: '', hexArr: [], buffer: new ArrayBuffer(0) };
+		}
 
 		const str1 = str.replace(/\s*/g, '').replace(/\n/g, '').replace(/\r/g, '');
 
@@ -769,30 +797,7 @@ const easySendData = async (str, isHex = true, extraData = {}) => {
 		// 记录本次发送时间
 		const hexArr = hexStrToArr(hexStr).map((s) => s.toUpperCase());
 
-		console.log(
-			'=======发送指令=======',
-			hexArr.join(' '),
-			JSON.stringify(sendMsg)
-		);
-
-		uni.$emit('onSendMsg', {
-			sendTime: new Date().getTime(),
-			sendMsg: sendMsg
-		});
-
-		// 记录本次发送消息
-		store.dispatch('addBleMsgQueue', {
-			str,
-			hexArr,
-			isReply: false,
-			time: new Date().getTime()
-		});
-
-		writeBLECharacteristicValue(buffer);
-
-		// 发送完毕后，删除队列第一个元素
-		const bleMsgQueueWait2 = bleMsgQueueWait.slice(1);
-		store.dispatch('setBleMsgQueueWait', bleMsgQueueWait2);
+		return { hexArr, hexStr, buffer };
 	}
 
 	// 字符串转utf8字节数组
@@ -820,22 +825,29 @@ const easySendData = async (str, isHex = true, extraData = {}) => {
 	}
 };
 
-const easySendHeart = (str, isHex = true, extraData = {}) => {
+const easySendHeart = (str, isHex = true) => {
 	clearInterval(HEART_TIMER);
 
 	if (!str) {
+		clearInterval(SEND_TIMER);
+		store.dispatch('setBleMsgQueue', []);
+		store.dispatch('setBleMsgQueueWait', []);
 		return;
 	}
 
 	HEART_TIMER = setInterval(async () => {
-		// 判断消息应答是否在3000ms内
-		const bleMsgQueue = store.getters.bleMsgQueue;
-		const bleMsgQueueLast = cloneDeep(bleMsgQueue?.at(-1) || {});
+		const bleData = store.getters.bleData;
+		if (!bleData?.connected) {
+			clearInterval(SEND_TIMER);
+			return;
+		}
 
-		const { time } = bleMsgQueueLast;
-
-		if (!time || (time && new Date().getTime() - time >= heartInterval)) {
-			await easySendData(str, isHex, extraData);
+		// 判断上一条消息是否超过100ms
+		const { time } = store.getters.bleMsgQueue?.at(-1) || {};
+		const canSend =
+			!time || (time && new Date().getTime() - time >= heartInterval);
+		if (canSend) {
+			await easySendData(str, isHex);
 		}
 	}, 1000);
 };

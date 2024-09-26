@@ -369,11 +369,7 @@ export default {
 				.join('');
 
 			this._checkBleState(() => {
-				this._easySendData(msg, true, {
-					data0,
-					data1,
-					data2
-				});
+				this._easySendData(msg, true);
 			});
 		},
 		onSliderDrag(event, code) {
@@ -460,14 +456,7 @@ export default {
 				.join('');
 			console.log('发送颜色设置========', msg);
 			this._checkBleState(() => {
-				this._easySendData(msg, true, {
-					data0,
-					data1,
-					data2,
-					data3,
-					data4,
-					data5
-				});
+				this._easySendData(msg, true);
 			});
 		},
 		// 发送模式设置
@@ -486,7 +475,7 @@ export default {
 			console.log('发送参数设置=========', msg);
 
 			this._checkBleState(() => {
-				this._easySendData(msg, true, { data0, data1, data2, data3, data4 });
+				this._easySendData(msg, true);
 			});
 		},
 		// 发送模式设置
@@ -504,7 +493,7 @@ export default {
 			console.log('发送模式设置========', msg);
 
 			this._checkBleState(() => {
-				this._easySendData(msg, true, { data0, data1, data2, data3 });
+				this._easySendData(msg, true);
 			});
 		},
 		// 发送爆闪模式设置
@@ -521,7 +510,7 @@ export default {
 			console.log('爆闪模式设置=========', msg);
 
 			this._checkBleState(() => {
-				this._easySendData(msg, true, { data0, data1, data2, data3 });
+				this._easySendData(msg, true);
 			});
 		},
 		// 发送天气模式设置
@@ -539,17 +528,17 @@ export default {
 			console.log('发送天气模式设置=========', msg);
 
 			this._checkBleState(() => {
-				this._easySendData(msg, true, { data0, data1, data2, data3, data4 });
+				this._easySendData(msg, true);
 			});
 		},
 		// 统一发送设置命令
-		_easySendData(msg, isHex = true, extraData) {
+		_easySendData(msg, isHex = true) {
 			console.log('发送设置命令========', msg);
 
-			ecBLE.easySendData(msg, isHex, extraData);
+			ecBLE.easySendData(msg, isHex);
 
-			uni.$off('setCallback');
-			uni.$on('setCallback', (res) => {
+			uni.$off('msgCallback');
+			uni.$on('msgCallback', (res) => {
 				// 监听设置回调
 				if (res.status) {
 					Toast('设置成功');

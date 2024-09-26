@@ -98,6 +98,11 @@ export default {
 			zoneDataA: []
 		};
 	},
+	computed: {
+		bleMcuData() {
+			return this.$store.getters.bleMcuData;
+		}
+	},
 	mounted() {
 		this.zoneDataA = this.$store.getters.zoneDataA;
 		setTimeout(() => {

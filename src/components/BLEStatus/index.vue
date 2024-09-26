@@ -12,7 +12,9 @@
 				@click="handleOpen"
 			>
 				<image src="~@/static/images/ble_state.png" mode="aspectFit" />
-				<text>{{ connected ? currentBle : '蓝牙连接' }}</text>
+				<text class="text-overflow1">{{
+					connected || currentBle ? currentBle : '蓝牙连接'
+				}}</text>
 			</view>
 		</view>
 		<van-popup :show="showPopup" @close="handleClose">
@@ -156,11 +158,7 @@ export default {
 			password: '',
 			setBleData: {},
 			deviceList: [],
-			myDeviceList: [],
-			sendData: {
-				sendTime: 0,
-				sendMsg: {}
-			}
+			myDeviceList: []
 		};
 	},
 	computed: {
@@ -240,21 +238,22 @@ export default {
 			}
 		});
 
-		uni.$on('onSendMsg', (res) => {
-			this.sendData = res;
+		uni.$on('onSendMsgFail', ({ str, hexArr }) => {
+			this._checkMessageFail(str, hexArr);
 		});
 
-		uni.$on('receiveMsg', ({ aHexStr, qHexArr, disTime, receiveDataValue }) => {
+		uni.$on('receiveMsg', ({ aHexStr, qHexArr, receiveDataValue }) => {
 			this.setBleData.receiveDataValue = receiveDataValue;
-			this._checkMessage(aHexStr, qHexArr, disTime);
+			this._checkMessage(aHexStr, qHexArr);
 		});
 	},
 	beforeDestroy() {
 		uni.$off('onShow');
 		uni.$off('checkPassword');
-		uni.$off('onSendMsg');
+		uni.$off('onSendMsgFail');
 		uni.$off('receiveMsg');
-		uni.$off('setCallback');
+		uni.$off('msgCallback');
+		uni.$off('statusChange');
 		this.handleStopDiscovery();
 	},
 	methods: {
@@ -418,23 +417,11 @@ export default {
 			const pwStr = `8305${data0}${data1}${data2}${data3}${data4}`;
 
 			setTimeout(() => {
-				ecBLE.easySendData(pwStr, true, {
-					data0,
-					data1,
-					data2,
-					data3,
-					data4
-				});
+				ecBLE.easySendData(pwStr, true);
 			}, 100);
 
 			setTimeout(() => {
-				ecBLE.easySendData(pwStr, true, {
-					data0,
-					data1,
-					data2,
-					data3,
-					data4
-				});
+				ecBLE.easySendData(pwStr, true);
 			}, 1000);
 		},
 
@@ -486,10 +473,7 @@ export default {
 
 			const [data0, data1] = ['FF', 'FF'];
 
-			ecBLE.easySendHeart(`8402${data0}${data1}`, true, {
-				data0,
-				data1
-			});
+			ecBLE.easySendHeart(`8402${data0}${data1}`, true);
 		}, 100),
 
 		_checkPassword(connect = false) {
@@ -514,14 +498,7 @@ export default {
 
 				ecBLE.easySendData(
 					`8305${data0}${data1}${data2}${data3}${data4}`,
-					true,
-					{
-						data0,
-						data1,
-						data2,
-						data3,
-						data4
-					}
+					true
 				);
 			}
 		},
@@ -543,62 +520,29 @@ export default {
 				});
 			});
 		}),
-		_checkSetState(zoneData) {
-			const { sendTime, sendMsg } = this.sendData || {};
-
-			const sendMsgKeys = Object.keys(sendMsg || {}).filter((key) =>
-				Object.keys(zoneData).includes(key)
-			);
-
-			const isSuccess =
-				sendMsgKeys?.length &&
-				sendMsgKeys.every((key) => {
-					return sendMsg[key] === zoneData[key];
-				});
-
-			const isFailed =
-				sendMsgKeys?.length &&
-				sendMsgKeys.some((key) => {
-					return sendMsg[key] !== zoneData[key];
-				});
-
-			console.log(
-				'=======收到消息======',
-				isSuccess,
-				JSON.stringify(zoneData),
-				JSON.stringify(sendMsg)
-			);
-
-			// sendTime 为空说明未发送指令
-			// sendTime 距离发送指令时间超过600m秒，说明指令已超时
-			if (
-				!sendTime ||
-				(sendTime && new Date().getTime() - sendTime > 600) ||
-				isFailed
-			) {
-				uni.$emit('setCallback', { status: 0, data: zoneData });
-			}
-
-			// 指令设置成功
-			if (isSuccess) {
-				uni.$emit('setCallback', { status: 1, data: zoneData });
+		_checkMessageFail(aHexStr, aHexArr) {
+			console.log('发送超时 >>>>>>>>>>:', aHexArr.join(' '));
+			uni.$emit('msgCallback', { status: 0, aHexArr });
+		},
+		_checkSetState(aHexStr, aHexArr, qHexArr) {
+			console.log('>>>>>>>>>> 收到消息:', aHexArr.join(' '));
+			if (aHexArr.join('') === qHexArr.join('')) {
+				uni.$emit('msgCallback', { status: 1, aHexArr });
 			}
 		},
-		_checkMessage(aHexStr, qHexArr, disTime) {
-			const qHexArr2 = (qHexArr || []).map((s) => s.toUpperCase());
+		_checkMessage(aHexStr, qHexArr) {
+			const aHexArr = hexStrToArr(aHexStr).map((s) => s.toUpperCase());
 
-			const hexArr = hexStrToArr(aHexStr)
-				.map((s) => s.toUpperCase())
-				.slice(3, -1);
+			const hexArr = aHexArr.slice(3, -1);
 
 			const [data0, data1, data2, data3, data4, data5] = hexArr;
 
-			this._checkSetState({ data0, data1, data2, data3, data4, data5 });
+			this._checkSetState(aHexStr, aHexArr, qHexArr);
+
+			const zoneDataA = this.$store.getters.zoneDataA;
 
 			/** 1606 氛围灯信息 **/
 			if (aHexStr.indexOf('2E1606') >= 0) {
-				const zoneDataA = this.$store.getters.zoneDataA;
-
 				const target = zoneDataA.find((item) => item.code === data0);
 
 				// 模式设置数据
@@ -660,16 +604,19 @@ export default {
 
 			/** 1703 氛围灯关联信息 **/
 			if (aHexStr.indexOf('2E1703') >= 0) {
-				const zoneDataA = this.$store.getters.zoneDataA;
 				const [data0, data1, data2] = hexArr;
 
-				const target = zoneDataA
-					.find((item) => item.code === data0)
-					.map((item) => {
-						if (item.code === data1) {
-							item.value = data2;
-						}
-					});
+				const target = zoneDataA.find((item) => item.code === data0);
+
+				if (!target) {
+					return;
+				}
+
+				target.signal.forEach((item) => {
+					if (item.code === data1) {
+						item.value = data2;
+					}
+				});
 
 				const newZoneDataA = zoneDataA.map((item) => {
 					if (item.code === data0) {
@@ -688,8 +635,10 @@ export default {
 			if (aHexStr.indexOf('2E1202') >= 0) {
 				const [data0] = hexArr;
 				const bleMcuData = this.$store.getters.bleMcuData;
-				bleMcuData.protocol = data0 === '01' ? '有协议' : '无协议';
-				this.$store.dispatch('setMcuData', bleMcuData);
+				this.$store.dispatch('setMcuData', {
+					...bleMcuData,
+					protocol: data0 === '01' ? '有协议' : '无协议'
+				});
 				console.log('1202 灯控协议', data0 === '01' ? '有协议' : '无协议');
 				return;
 			}
@@ -697,8 +646,11 @@ export default {
 			/** 15MCU 版本信息 **/
 			if (aHexStr.indexOf('2E15') >= 0) {
 				const bleMcuData = this.$store.getters.bleMcuData;
-				bleMcuData.mcuVersion = hexToAscii(hexArr.join('')).trim();
-				this.$store.dispatch('setMcuData', bleMcuData);
+
+				this.$store.dispatch('setMcuData', {
+					...bleMcuData,
+					mcuVersion: hexToAscii(hexArr.join('')).trim()
+				});
 				console.log('15MCU版本信息', hexToAscii(hexArr.join('')));
 				return;
 			}
@@ -791,17 +743,6 @@ export default {
 					});
 				}
 			);
-		},
-
-		_showModal(title, content) {
-			uni.showModal({
-				title: title,
-				content: content,
-				showCancel: false
-			});
-		},
-		_getStrFirst(str) {
-			return str.slice(0, 1);
 		}
 	}
 };
