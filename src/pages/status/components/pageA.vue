@@ -117,10 +117,14 @@ export default {
 </script>
 
 <style lang="scss" scoped>
+.zone_wrap {
+	margin-top: -30rpx;
+}
 .zone_status {
 	padding-bottom: 20rpx;
 	.zone_title {
 		font-size: $uni-font-size-base;
+		color: $uni-text-color;
 		padding: 10rpx 40rpx;
 		display: flex;
 		align-items: center;
@@ -136,36 +140,44 @@ export default {
 	.zone_state_wrap {
 		padding: 0 40rpx;
 		background: rgba(144, 62, 255, 0.15);
-		border-radius: 60rpx;
 		border: 1px solid rgba(#9f57ff, 0.2);
+		border-radius: 50rpx;
 
 		.state_item {
 			display: flex;
 			align-items: center;
 			justify-content: space-between;
-			font-size: $uni-font-size-sm;
-			line-height: 45rpx;
+			font-size: $uni-font-size-lm;
+			line-height: 54rpx;
+			&:first-child > view {
+				padding-top: 10rpx;
+			}
+			&:last-child > view {
+				padding-bottom: 10rpx;
+			}
+
 			& + .state_item {
 				border-top: 1rpx solid rgba(0, 0, 0, 0.3);
 			}
 			.state_item1 {
 				width: 200rpx;
 			}
+
 			.state_item2 {
-				width: 170rpx;
+				width: 160rpx;
 				background: rgba(0, 0, 0, 0.2);
 				> view + view {
 					border-top: 1rpx solid rgba(0, 0, 0, 0.3);
 				}
 
 				&.color_item {
-					height: 2em;
+					height: 64rpx;
 					display: flex;
 					align-items: center;
 					justify-content: center;
 					.color_circle {
-						width: 24rpx;
-						height: 24rpx;
+						width: 28rpx;
+						height: 28rpx;
 						display: inline-block;
 						border-radius: 100%;
 					}
@@ -174,20 +186,20 @@ export default {
 			.mode_item,
 			.breathRate_item,
 			.brightness_item {
-				text {
-					margin-left: 45rpx;
-				}
+				display: flex;
+				align-items: center;
+				justify-content: center;
 			}
 
 			.signalData_item {
 				> view {
 					display: flex;
 					align-items: center;
+					justify-content: center;
 				}
 				image {
 					width: 30rpx;
 					height: 30rpx;
-					margin-left: 15rpx;
 					margin-right: 6rpx;
 				}
 			}
@@ -195,6 +207,7 @@ export default {
 			.state_item3 {
 				flex-grow: 1;
 				text-align: center;
+
 				> view + view {
 					border-top: 1rpx solid rgba(0, 0, 0, 0.3);
 				}

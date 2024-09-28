@@ -98,7 +98,7 @@
 					:key="index"
 					:name="index"
 					use-icon-slot
-					@click="onRadioClick(item.code, `_mode${currentModel}`)"
+					@click.native="onRadioClick(item.code, `_mode${currentModel}`)"
 				>
 					<image
 						slot="icon"
@@ -518,8 +518,8 @@ export default {
 			const data1 = '01'; // 0x00：参数设置 0x01：模式设置
 			const { code: data0, mode: data2, weather } = this.setZoneData;
 
-			const data3 = numberToHex(weather.humidity);
-			const data4 = numberToHex(parseInt(weather.temperature) + 50);
+			const data3 = numberToHex(weather?.humidity || 0);
+			const data4 = numberToHex(parseInt(weather?.temperature || 0) + 50);
 
 			const msg = ['86', '06', data0, data1, data2, data3, data4, 'ff']
 				.map((item) => `${item}`.padStart(2, '0'))
@@ -781,7 +781,6 @@ export default {
 		.van-radio {
 			flex-grow: 1;
 			width: 98%;
-			padding: 15rpx 0;
 			display: flex;
 			align-items: center;
 			justify-content: center;
@@ -791,13 +790,13 @@ export default {
 			margin: 5rpx;
 
 			image {
-				width: 30rpx;
-				height: 30rpx;
+				width: 32rpx;
+				height: 32rpx;
 			}
 
 			.van-radio__label {
 				width: 5em;
-				line-height: 1em;
+				line-height: 40rpx;
 				font-size: $uni-font-size-lm;
 				color: $uni-text-color;
 				padding-left: 15rpx;
@@ -896,7 +895,7 @@ export default {
 				display: flex;
 				align-items: center;
 				flex-wrap: wrap;
-				padding-left: 90rpx;
+				padding-left: 30rpx;
 				margin-right: -10px;
 			}
 			::v-deep van-radio {
@@ -917,16 +916,15 @@ export default {
 					align-items: center;
 				}
 				image {
-					width: 28rpx;
-					height: 28rpx;
+					width: 32rpx;
+					height: 32rpx;
 					object-fit: contain;
 					margin-left: 0;
 				}
 				.radio_label {
-					font-size: 22rpx;
+					font-size: $uni-font-size-lm;
 					color: $uni-text-color;
 					text-align: center;
-					margin-left: 5px;
 				}
 			}
 		}

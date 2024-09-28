@@ -271,6 +271,8 @@ export default {
 
 			ecBLE.setBleData(this.setBleData);
 
+			this._keepBleHear(this.setBleData.connected);
+
 			setTimeout(() => {
 				ecBLE.checkBleConnected((res) => {
 					const { deviceList, connectedDeviceList } = res;
@@ -510,7 +512,6 @@ export default {
 			}
 			console.log('=======连接反馈========', res);
 		},
-
 		_connectFn: throttle(function (item) {
 			if (!item.deviceId) return;
 			return new Promise((resolve) => {
@@ -526,7 +527,8 @@ export default {
 		},
 		_checkSetState(aHexStr, aHexArr, qHexArr) {
 			console.log('>>>>>>>>>> 收到消息:', aHexArr.join(' '));
-			if (aHexArr.join('') === qHexArr.join('')) {
+
+			if (qHexArr?.length && aHexArr.join('') === qHexArr.join('')) {
 				uni.$emit('msgCallback', { status: 1, aHexArr });
 			}
 		},

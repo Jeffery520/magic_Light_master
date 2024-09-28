@@ -166,7 +166,7 @@ export default {
 	justify-content: center;
 	align-items: center;
 	position: relative;
-	line-height: 1em;
+	line-height: 1.2em;
 	font-size: $uni-font-size-sm;
 
 	.fixed_bg {

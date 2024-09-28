@@ -24,65 +24,8 @@
     }
   }
 
-  .contact_button {
-    width: 300rpx;
-    height: 70rpx;
-    line-height: 70rpx;
-    border: none;
-    padding: 0;
-    margin-top: 25px;
-    text-align: center;
-    color: #fff;
-    font-size: $uni-font-size-base;
-    background: linear-gradient(to right, #1cb9c0, #6c60e1, #883fea);
-    border-radius: 70px;
-    transition: all 0.2s;
-    padding: 6rpx;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    &.contact_button_info {
-      background: #283f5f;
-    }
 
-    &:active {
-      opacity: 0.5;
-    }
 
-    > view {
-      flex-grow: 1;
-      height: 58rpx;
-      line-height: 58rpx;
-      background: #1f2a44;
-      border-radius: 70px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      ::v-deep .van-loading {
-        margin-right: 15rpx;
-      }
-    }
-  }
-
-  .custom_input {
-    width: 100%;
-    ::v-deep .van-cell {
-      padding: 0;
-      background: rgba(0, 0, 0, 0);
-      &:after {
-        border: none;
-      }
-    }
-    ::v-deep .van-field__control {
-      color: $uni-text-color;
-      font-size: $uni-font-size-lm;
-      .van-field__placeholder {
-        color: $uni-text-color;
-        font-size: $uni-font-size-lm;
-        opacity: 0.5;
-      }
-    }
-  }
 
   .custom_progress1 {
     ::v-deep .van-progress__portion {
@@ -113,6 +56,7 @@
       }
     }
   }
+
   .custom_progress2 {
     padding: 1px;
     border-radius: 20px;
@@ -144,6 +88,26 @@
         z-index: 2;
         background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAARCAMAAADjcdz2AAAAOVBMVEUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC8dlA9AAAAE3RSTlMACiAdBhIxPDVBOEVIDiUVTVAqP8urBgAAAJJJREFUGNNtj0sWAyEIBEEZBVEzk/sfNt2TzyoueJSFj1ZwHtNELAtaD5R6HiLHBKs3qDIVbVaoNhR+wtvJ+e6GGg/M5zYxbwtewBIbZTjmd6JbeTN9GRXsfPrsB+Y7WIcLWcmFq7Da4D+8hNHKpd9oTRg1yEH2/i/6hUu7mGfcPuA1C7kpakKt91fIVeAtfn7HC4SLBFzfjcAOAAAAAElFTkSuQmCC);
         background-size: auto 100%;
+      }
+    }
+  }
+
+  .custom_input {
+    width: 100%;
+    ::v-deep .van-cell {
+      padding: 0;
+      background: rgba(0, 0, 0, 0);
+      &:after {
+        border: none;
+      }
+    }
+    ::v-deep .van-field__control {
+      color: $uni-text-color-secondary;
+      font-size: $uni-font-size-lm;
+      .van-field__placeholder {
+        color: $uni-text-color-secondary;
+        font-size: $uni-font-size-lm;
+        opacity: 0.3;
       }
     }
   }
@@ -231,5 +195,104 @@
         align-items: center;
       }
     }
+  }
+
+  .contact_button {
+    width: 300rpx;
+    height: 70rpx;
+    line-height: 70rpx;
+    border: none;
+    padding: 0;
+    text-align: center;
+    color: rgba(#fff, 0.9);
+    font-size: $uni-font-size-base;
+    background: linear-gradient(to right, #1cb9c0, #6c60e1, #883fea);
+    border-radius: 70px;
+    transition: all 0.2s;
+    padding: 6rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    &.contact_button_info {
+      background: #283f5f;
+    }
+
+    &:active {
+      opacity: 0.5;
+    }
+
+    > view {
+      flex-grow: 1;
+      height: 58rpx;
+      line-height: 58rpx;
+      background: #1f2a44;
+      border-radius: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      ::v-deep .van-loading {
+        margin-right: 15rpx;
+      }
+    }
+  }
+
+  ::v-deep .van-popup {
+    width: 90%;
+    padding: 30rpx 20rpx;
+    background: #14182a;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    box-shadow: 0 0 5px rgba(0, 0, 0, 0.7);
+    border-radius: 30rpx;
+    z-index: 999 !important;
+    .popup_body {
+      padding: 20rpx;
+      width: 100%;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      .popup_title {
+        color: $uni-text-color;
+        font-size: 30rpx;
+        text-align: center;
+      }
+      .popup_content {
+        padding: 30px 0;
+      }
+      .popup_footer {
+        width: 100%;
+        display: flex;
+        justify-content: space-around;
+        align-items: center;
+        .contact_button {
+          width: 40%;
+          flex-grow: 1;
+          margin-top: 0;
+          & + .contact_button {
+            margin-left: 20rpx;
+          }
+        }
+      }
+    }
+  }
+}
+
+::v-deep van-toast {
+  --toast-background-color: rgba(29, 40, 64, 0.95) !important;
+  --loading-spinner-size: 32px !important;
+  .van-toast-show--false {
+    display: none !important;
+  }
+  .van-toast--text {
+    text-align: center;
+  }
+  .van-loading__spinner--circular {
+    border-width: 6rpx !important;
+    border-color: var(--loading-spinner-color) !important;
+    border-top-color: transparent !important;
   }
 }

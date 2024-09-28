@@ -20,14 +20,16 @@ $page-background-color: #0e0f1b; //基本色
 $uni-color-primary: #007aff;
 $uni-color-success: #4cd964;
 $uni-color-warning: #f0ad4e;
-$uni-color-error: #ee1e3f;
+$uni-color-error: #dd524d;
 
 /* 文字基本颜色 */
-$uni-text-color: #838aa7; //基本色
-$uni-text-color-secondary: #667999; //基本色
+$uni-text-color: #99a9d9; //基本色
+$uni-text-color-secondary: #8795bf; //基本色
+$uni-text-color-third: #6c748c; //基本色
 $uni-text-active-color: #0ddce0; //基本色
-$uni-text-highlight-color: #19c9ce; //基本色
+$uni-text-highlight-color: #00dde1; //基本色
 $uni-text-highlight-color2: #9f57ff; //基本色
+$uni-text-highlight-color3: #ac1fea; //基本色
 
 $uni-text-color-inverse: #ffffff; //反色
 $uni-text-color-grey: #999; //辅助灰色，如加载更多的提示信息
@@ -42,7 +44,6 @@ $uni-bg-color-mask: rgba(0, 0, 0, 0.4); //遮罩颜色
 
 /* 边框颜色 */
 $uni-border-color: #c8c7cc;
-$uni-border-color2: rgba(0, 0, 0, 0.45); //点击状态边框颜色
 
 /* 尺寸变量 */
 
