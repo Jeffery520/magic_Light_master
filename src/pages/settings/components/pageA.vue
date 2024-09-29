@@ -271,6 +271,7 @@ export default {
 		return {
 			radioIcon1,
 			radioIcon2,
+			isLoading: false,
 			zoneDataA: [],
 			zoneIndex: 0,
 			setZoneData: {},
@@ -298,6 +299,16 @@ export default {
 		}
 	},
 	mounted() {
+		Toast.setDefaultOptions({
+			duration: 1800,
+			onClose: () => {
+				this.isLoading = true;
+				setTimeout(() => {
+					this.isLoading = false;
+				}, 300);
+			}
+		});
+
 		this.zoneDataA = this.$store.getters.zoneDataA;
 		this.setZoneData = this.zoneDataA[this.zoneIndex];
 	},
@@ -454,7 +465,7 @@ export default {
 			const msg = ['86', '06', data0, data1, data2, data3, data4, data5]
 				.map((item) => `${item}`.padStart(2, '0'))
 				.join('');
-			console.log('发送颜色设置========', msg);
+
 			this._checkBleState(() => {
 				this._easySendData(msg, true);
 			});
@@ -471,8 +482,6 @@ export default {
 			const msg = ['86', '06', data0, data1, data2, data3, data4, 'ff']
 				.map((item) => `${item}`.padStart(2, '0'))
 				.join('');
-
-			console.log('发送参数设置=========', msg);
 
 			this._checkBleState(() => {
 				this._easySendData(msg, true);
@@ -507,8 +516,6 @@ export default {
 				.map((item) => `${item}`.padStart(2, '0'))
 				.join('');
 
-			console.log('爆闪模式设置=========', msg);
-
 			this._checkBleState(() => {
 				this._easySendData(msg, true);
 			});
@@ -525,16 +532,12 @@ export default {
 				.map((item) => `${item}`.padStart(2, '0'))
 				.join('');
 
-			console.log('发送天气模式设置=========', msg);
-
 			this._checkBleState(() => {
 				this._easySendData(msg, true);
 			});
 		},
 		// 统一发送设置命令
 		_easySendData(msg, isHex = true) {
-			console.log('发送设置命令========', msg);
-
 			ecBLE.easySendData(msg, isHex);
 
 			uni.$off('msgCallback');

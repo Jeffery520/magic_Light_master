@@ -6,6 +6,7 @@
 					>运行状态：{{ !connected ? '未连接' : '良好' }}</text
 				>
 			</view>
+
 			<view
 				class="ble_status_right"
 				:class="{ is_connected: connected }"
@@ -80,7 +81,7 @@
 				</view>
 			</view>
 		</van-popup>
-		<!--密码输入弹窗-->
+		<!--    密码输入弹窗-->
 		<van-popup :show="showPwPopup" :close-on-click-overlay="false">
 			<view class="password_popup">
 				<view class="password_title">
@@ -91,7 +92,6 @@
 				</view>
 
 				<van-field
-					ref="pwRef"
 					v-model="password"
 					type="number"
 					:maxlength="4"
@@ -165,20 +165,27 @@ export default {
 		getBleData() {
 			return this.$store.getters.bleData;
 		},
+		connected() {
+			return this.$store.getters.bleData?.connected;
+		},
 		needChangePw() {
 			return this.setBleData.ecUserPassword === '0000';
 		},
-		connected() {
-			return this.getBleData.connected;
-		},
 		currentBle() {
-			const target = (this.getBleData?.deviceList || []).find(
+			const target = (this.$store.getters.bleData?.deviceList || []).find(
 				(item) => item?.connected
 			);
 			return target?.name || '蓝牙连接';
 		}
 	},
 	watch: {
+		connected(val) {
+			if (!val) {
+				clearInterval(Timer);
+				this.showPwPopup = false;
+				Toast.fail('蓝牙已断开');
+			}
+		},
 		'getBleData.deviceList': {
 			handler(val) {
 				this.deviceList = val;
@@ -210,7 +217,11 @@ export default {
 			deep: true
 		}
 	},
-	created() {
+	mounted() {
+		Toast.setDefaultOptions({
+			duration: 1800
+		});
+
 		if (!this.mustConnect) {
 			return;
 		}
@@ -523,12 +534,22 @@ export default {
 		}),
 		_checkMessageFail(aHexStr, aHexArr) {
 			console.log('发送超时 >>>>>>>>>>:', aHexArr.join(' '));
-			uni.$emit('msgCallback', { status: 0, aHexArr });
+
+			const setCodes = ['2E16', '2E17', '2E13']; // 氛围灯设置、关联设置、密码设置
+			const isSetting = setCodes.some((code) => aHexStr.indexOf(code) === 0);
+
+			if (isSetting) {
+				uni.$emit('msgCallback', { status: 0, aHexArr });
+			}
 		},
 		_checkSetState(aHexStr, aHexArr, qHexArr) {
 			console.log('>>>>>>>>>> 收到消息:', aHexArr.join(' '));
 
-			if (qHexArr?.length && aHexArr.join('') === qHexArr.join('')) {
+			const setCodes = ['2E16', '2E17', '2E13']; // 氛围灯设置、关联设置、密码设置
+			const isSetting = setCodes.some((code) => aHexStr.indexOf(code) === 0);
+			const isSuccess = aHexArr.join('') === (qHexArr || []).join('');
+
+			if (isSetting && isSuccess) {
 				uni.$emit('msgCallback', { status: 1, aHexArr });
 			}
 		},
@@ -753,18 +774,32 @@ export default {
 <style lang="scss" scoped>
 .ble_status_wrap {
 	padding: 10rpx 0 30rpx;
+	z-index: 99;
 	.ble_status_top {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
 		padding: 5rpx 0;
+
 		.ble_status_left {
-			color: $uni-text-highlight-color;
-		}
-		.ble_status_right {
 			display: flex;
 			align-items: center;
-			opacity: 0.7;
+			color: $uni-text-color;
+			font-size: $uni-font-size-base;
+			z-index: 99;
+			image {
+				flex-shrink: 0;
+				width: 40rpx;
+				height: 40rpx;
+				display: block;
+				object-fit: contain;
+			}
+		}
+		.ble_status_right {
+			max-width: 35%;
+			display: flex;
+			align-items: center;
+			z-index: 9999999999;
 			&.is_connected {
 				opacity: 1;
 				color: $uni-text-highlight-color;
@@ -864,6 +899,19 @@ export default {
 			margin-top: 20rpx;
 			font-size: 12px;
 		}
+		.contact_button {
+			width: 50%;
+			margin-top: 20px;
+			.contact_button_inner {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+			::v-deep .van-count-down {
+				color: #eff3ff;
+				margin-left: 10rpx;
+			}
+		}
 	}
 
 	.password_popup {
@@ -875,12 +923,13 @@ export default {
 		justify-content: center;
 		align-items: center;
 		.password_title {
-			color: rgba(#fff, 0.9);
+			color: $uni-text-color;
+			font-size: 30rpx;
 			text-align: center;
 		}
 		.password_input {
-			width: 60%;
-			margin: 60px 0 30px;
+			width: 80%;
+			margin: 30px 0;
 
 			::v-deep .van-cell {
 				background: rgba(0, 0, 0, 0);
@@ -889,9 +938,14 @@ export default {
 				}
 			}
 			::v-deep .van-field__control {
-				font-size: 20px;
+				font-size: 40rpx;
 				text-align: center;
 				color: $uni-text-color;
+				.van-field__placeholder {
+					color: $uni-text-color;
+					font-size: 40rpx;
+					opacity: 0.5;
+				}
 			}
 		}
 		.password_footer {
@@ -900,50 +954,12 @@ export default {
 			justify-content: space-around;
 			align-items: center;
 			.contact_button {
-				width: 45%;
-				padding: 6rpx;
-				background: url('/static/images/button_bg.png') no-repeat;
-				background-size: 100% 100%;
-				position: relative;
-				.contact_button_inner {
-					width: 100%;
-					height: 100%;
-					//background: #283f5f;
-					border-radius: 100px;
-					display: flex;
-					justify-content: center;
-					align-items: center;
-				}
-				&.contact_button_info {
-					background: #283f5f;
+				width: 40%;
+				flex-grow: 1;
+				& + .contact_button {
+					margin-left: 20rpx;
 				}
 			}
-		}
-	}
-
-	.contact_button {
-		width: 420rpx;
-		height: 70rpx;
-		overflow: hidden;
-		flex-shrink: 0;
-		line-height: 70rpx;
-		margin-top: 20rpx;
-		color: #fff;
-		font-size: 14px;
-		border-radius: 300px;
-		background: url('/static/images/sing_btn.png') no-repeat;
-		background-size: 100% 100%;
-		border: none;
-		display: flex;
-		justify-content: center;
-		align-items: center;
-		transition: all 0.1s;
-		&:active {
-			opacity: 0.4;
-		}
-		::v-deep .van-count-down {
-			color: #fff;
-			margin-left: 10rpx;
 		}
 	}
 }

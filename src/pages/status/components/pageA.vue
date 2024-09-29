@@ -141,7 +141,7 @@ export default {
 		padding: 0 40rpx;
 		background: rgba(144, 62, 255, 0.15);
 		border: 1px solid rgba(#9f57ff, 0.2);
-		border-radius: 50rpx;
+		border-radius: 60rpx;
 
 		.state_item {
 			display: flex;
