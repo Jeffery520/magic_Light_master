@@ -4,7 +4,7 @@
 		<nav-bar>{{ title }}</nav-bar>
 		<view class="content_wrap">
 			<view class="my_ble_wrap">
-				<BLEStatus v-if="showBle" :showState="false" />
+				<BLEStatus v-if="showBle" />
 			</view>
 			<PageA />
 		</view>

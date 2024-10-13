@@ -3,7 +3,11 @@
 		<van-toast id="van-toast" />
 		<nav-bar>{{ title }}</nav-bar>
 		<view class="content_wrap">
-			<BLEStatus :mustConnect="false" @statusChange="onStatusChange" />
+			<BLEStatus
+				:mustConnect="false"
+				:showState="false"
+				@statusChange="onStatusChange"
+			/>
 			<view class="logo_wrap">
 				<van-transition
 					:show="showLogo"

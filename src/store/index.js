@@ -19,6 +19,7 @@ const zoneDataA = [
 		value3: '00', // 呼吸节奏
 		value4: '255,255,255', // 颜色
 		value5: 100, // 爆闪节奏
+		value6: '00', // 灯条模式 00 RGB 01 RBG 02 GRB 03 GBR 04 BRG 05 BGR
 		weather: {
 			name: '晴天',
 			humidity: '--',
@@ -68,6 +69,7 @@ const zoneDataA = [
 		value3: '00', // 呼吸节奏
 		value4: '255,255,255', // 颜色
 		value5: 100, // 爆闪节奏
+		value6: '00', // 灯条模式 00 RGB 01 RBG 02 GRB 03 GBR 04 BRG 05 BGR
 		weather: {
 			name: '晴天',
 			humidity: '--',
@@ -117,6 +119,7 @@ const zoneDataA = [
 		value3: '00', // 呼吸节奏
 		value4: '255,255,255', // 颜色
 		value5: 100, // 爆闪节奏
+		value6: '00', // 灯条模式 00 RGB 01 RBG 02 GRB 03 GBR 04 BRG 05 BGR
 		weather: {
 			name: '晴天',
 			humidity: '--',

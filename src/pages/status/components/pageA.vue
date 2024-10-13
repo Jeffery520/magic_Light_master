@@ -38,6 +38,13 @@
 					}}</view>
 				</view>
 				<view class="state_item">
+					<view class="state_item1">灯条模式</view>
+					<view class="state_item2 brightness_item">
+						<text>{{ _getColorMode(item.value6).label }}</text>
+					</view>
+					<view class="state_item3">{{ _getColorMode(item.value6).name }}</view>
+				</view>
+				<view class="state_item">
 					<view class="state_item1">当前亮度</view>
 					<view class="state_item2 brightness_item">
 						<text>{{ item.value2 }}</text>
@@ -78,7 +85,19 @@ export default {
 	components: {
 		ColorInput
 	},
-	props: {},
+	data() {
+		return {
+			// 灯条模式 00 RGB 01 RBG 02 GRB 03 GBR 04 BRG 05 BGR
+			colorMode: [
+				{ label: 'RGB', value: '00', name: '红绿蓝' },
+				{ label: 'RBG', value: '01', name: '红蓝绿' },
+				{ label: 'GRB', value: '02', name: '绿红蓝' },
+				{ label: 'GBR', value: '03', name: '绿蓝红' },
+				{ label: 'BRG', value: '04', name: '蓝红绿' },
+				{ label: 'BGR', value: '05', name: '蓝绿红' }
+			]
+		};
+	},
 	computed: {
 		connected() {
 			return this.getBleData.connected;
@@ -97,6 +116,11 @@ export default {
 		}
 	},
 	methods: {
+		_getColorMode(value) {
+			return (
+				this.colorMode.find((item) => item.value === value) || this.colorMode[0]
+			);
+		},
 		_getModeName(mode) {
 			const target = this.zoneModesA.find((item) => item?.code === mode);
 			return target?.name || '';

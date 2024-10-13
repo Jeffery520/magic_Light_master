@@ -218,7 +218,7 @@ export default {
 	.zone_state_wrap {
 		padding: 20rpx 50rpx;
 		background: rgba(144, 62, 255, 0.15);
-		border-radius: 100rpx;
+		border-radius: 60rpx;
 		border: 1px solid rgba(#9f57ff, 0.2);
 
 		.state_item {

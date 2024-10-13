@@ -193,6 +193,19 @@
 					<text class="slider_right">快</text>
 				</view>
 			</view>
+			<view class="form_item">
+				<text class="form_item_label">灯条模式</text>
+				<view
+					class="form_item_content form_item_content2"
+					@click="handleFormSet('value6')"
+				>
+					<text class="item_value"
+						>{{ _getColorMode(setZoneData.value6) }}
+					</text>
+					<van-icon name="arrow" />
+				</view>
+			</view>
+
 			<view class="form_item form_item_signal">
 				<text class="form_item_label">信号关联</text>
 				<view class="form_item_content">
@@ -245,10 +258,13 @@
 				</view>
 			</view>
 		</view>
+
+		<FormPopup ref="formPopupRef" @confirm="onFormPopupConfirm" />
 	</view>
 </template>
 
 <script>
+import FormPopup from '@/pages/settings/components/FormPopup';
 import WeatherTool from '@/components/Weather/index.vue';
 import ColorPicker from '@/components/ColorPicker/index.vue';
 import ecBLE from '@/utils/ecBLE.js';
@@ -264,6 +280,7 @@ export default {
 		styleIsolation: 'shared'
 	},
 	components: {
+		FormPopup,
 		WeatherTool,
 		ColorPicker
 	},
@@ -275,7 +292,16 @@ export default {
 			zoneDataA: [],
 			zoneIndex: 0,
 			setZoneData: {},
-			currentModel: '00'
+			currentModel: '00',
+			// 灯条模式 00 RGB 01 RBG 02 GRB 03 GBR 04 BRG 05 BGR
+			colorMode: [
+				{ label: 'RGB', value: '00', name: '红绿蓝' },
+				{ label: 'RBG', value: '01', name: '红蓝绿' },
+				{ label: 'GRB', value: '02', name: '绿红蓝' },
+				{ label: 'GBR', value: '03', name: '绿蓝红' },
+				{ label: 'BRG', value: '04', name: '蓝红绿' },
+				{ label: 'BGR', value: '05', name: '蓝绿红' }
+			]
 		};
 	},
 	computed: {
@@ -313,6 +339,30 @@ export default {
 		this.setZoneData = this.zoneDataA[this.zoneIndex];
 	},
 	methods: {
+		_getColorMode(value) {
+			const mode =
+				this.colorMode.find((item) => item.value === value) ||
+				this.colorMode[0];
+			return `${mode.label} ${mode.name}`;
+		},
+		handleFormSet(code) {
+			uni.vibrateShort();
+
+			this._checkBleState(() => {
+				this.$refs.formPopupRef.formData = {
+					code,
+					title: '灯条模式',
+					value: this.setZoneData[code]
+				};
+				this.$refs.formPopupRef.show = true;
+			});
+		},
+		onFormPopupConfirm(data) {
+			const { value } = data;
+			uni.vibrateShort();
+			this.setZoneData.value6 = value;
+			this._sendModelParams();
+		},
 		// 分区切换
 		zoneIndexChange(index) {
 			uni.vibrateShort();
@@ -473,18 +523,20 @@ export default {
 		// 发送模式设置
 		_sendModelParams() {
 			const data1 = '00'; // 0x00：参数设置 0x01：模式设置
-			const { code: data0, value1, value2, value3 } = this.setZoneData;
+			const { code: data0, value1, value2, value3, value6 } = this.setZoneData;
 
 			const data2 = numberToHex(value1);
 			const data3 = numberToHex(value2);
 			const data4 = numberToHex(value3);
+			const data5 = `${value6}`.padStart(2, '0');
 
-			const msg = ['86', '06', data0, data1, data2, data3, data4, 'ff']
+			const msg = ['86', '06', data0, data1, data2, data3, data4, data5]
 				.map((item) => `${item}`.padStart(2, '0'))
 				.join('');
 
 			this._checkBleState(() => {
 				this._easySendData(msg, true);
+				this.$refs.formPopupRef.show = false;
 			});
 		},
 		// 发送模式设置
@@ -595,7 +647,11 @@ export default {
 
 <style lang="scss" scope>
 .page_module_wrap {
-	color: #fff;
+	--color-primary: #8d00cc;
+	--color-primary-dark0: #472373;
+	--color-primary-dark1: #4a0e72;
+	--color-primary-dark2: #220d37;
+	color: $uni-white-color;
 	font-size: $uni-font-size-lm;
 	> view + view {
 		margin-top: 15rpx;
@@ -609,25 +665,25 @@ export default {
 		width: 30%;
 		padding: 15rpx 0;
 		flex-grow: 1;
-		background: #220f37;
+		background: var(--color-primary-dark2);
 		display: flex;
 		flex-direction: column;
 		justify-content: center;
 		align-items: center;
 		border-radius: 200px;
-		border: 1px solid #722cb2;
+		border: 1px solid var(--color-primary-dark1);
 		&:active,
 		&.is_active {
-			background: #490d6f;
+			background: var(--color-primary-dark1);
 		}
 
 		text:first-child {
-			color: #fff;
+			color: $uni-white-color;
 			font-size: $uni-font-size-lm;
 			font-weight: bold;
 		}
 		text:last-child {
-			color: #7c0eac;
+			color: var(--color-primary);
 			font-size: $uni-font-size-mm;
 		}
 	}
@@ -647,12 +703,12 @@ export default {
 		justify-content: center;
 		padding: 15rpx 0;
 		margin: 5rpx;
-		color: #fff;
-		background: #220f37;
 		border-radius: 200px;
-		border: 1px solid #722cb2;
+		color: $uni-white-color;
+		background: var(--color-primary-dark2);
+		border: 1px solid var(--color-primary-dark1);
 		&.active {
-			background: #490d6f;
+			background: var(--color-primary-dark1);
 		}
 	}
 }
@@ -679,7 +735,11 @@ export default {
 				flex-grow: 1;
 				.van-slider {
 					border-radius: 10rpx;
-					background: linear-gradient(to left, #8257f8, #29b7d5);
+					background: linear-gradient(
+						to left,
+						var(--color-primary),
+						$uni-text-active-color2
+					);
 					position: relative;
 					.slider_interval {
 						width: 100%;
@@ -700,9 +760,7 @@ export default {
 					}
 				}
 				.van-slider__bar {
-					//border-radius: 8rpx 0 0 8rpx;
-					//background: linear-gradient(to left, #8257f8, #29b7d5);
-					background: rgba(#fff, 0) !important;
+					background: rgba($uni-white-color, 0) !important;
 				}
 			}
 			.slider_left {
@@ -730,11 +788,11 @@ export default {
 					color: #333333;
 					font-size: 20rpx;
 					font-weight: 700;
-					background: #fff !important;
+					background: $uni-white-color !important;
 					border-radius: 8rpx;
 					box-sizing: border-box;
 					box-shadow: 0 0 10rpx rgba(0, 0, 0, 0.3);
-					border-bottom: 2px solid #fff;
+					border-bottom: 2px solid $uni-white-color;
 					overflow: hidden;
 					.slider_value {
 						padding-left: 8rpx;
@@ -747,7 +805,10 @@ export default {
 						content: '';
 						width: 100%;
 						height: 7px;
-						background: linear-gradient(#8257f8, #29b7d5);
+						background: linear-gradient(
+							var(--color-primary),
+							$uni-text-active-color2
+						);
 					}
 
 					&:after {
@@ -758,7 +819,7 @@ export default {
 						letter-spacing: 0;
 						color: #bbb;
 						font-size: 22rpx;
-						background: #fff;
+						background: $uni-white-color;
 						overflow: hidden;
 						box-sizing: border-box;
 					}
@@ -826,21 +887,38 @@ export default {
 		}
 		.form_item_content {
 			flex-grow: 1;
-			background: rgba(#fff, 0.05);
+			background: rgba($uni-white-color, 0.05);
 			border-radius: 12rpx;
 			padding: 20rpx;
 			display: flex;
 			align-items: center;
 			justify-content: space-between;
 			font-size: $uni-font-size-sm;
+
+			&.form_item_content2 {
+				justify-content: flex-end;
+				.item_value {
+					text-align: right;
+				}
+				::v-deep .van-icon {
+					color: $uni-text-color-third;
+					margin-left: 10rpx;
+					margin-right: -5rpx;
+				}
+			}
+
 			::v-deep van-slider {
 				flex-grow: 1;
 
 				.van-slider {
-					background: rgba(#29b7d5, 0.4);
+					background: rgba($uni-text-active-color2, 0.4);
 				}
 				.van-slider__bar {
-					background: linear-gradient(to right, #8257f8, #29b7d5);
+					background: linear-gradient(
+						to right,
+						var(--color-primary),
+						$uni-text-active-color2
+					);
 				}
 			}
 			.slider_left {
@@ -855,9 +933,9 @@ export default {
 			.custom_slider_button {
 				width: 40rpx;
 				height: 40rpx;
-				background: #29b7d5 !important;
+				background: $uni-text-active-color2 !important;
 				border-radius: 100%;
-				border: 10rpx solid #fff;
+				border: 10rpx solid $uni-white-color;
 				box-shadow: inset 0 0 5rpx rgba(#000, 0.5);
 			}
 		}

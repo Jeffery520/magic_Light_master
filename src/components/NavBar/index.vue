@@ -127,7 +127,7 @@ export default {
 	::v-deep .head-content {
 		width: 100%;
 		height: 75rpx;
-		color: $uni-text-highlight-color;
+		color: $uni-text-active-color1;
 		background-color: $page-header-color;
 		border-bottom: 1rpx solid #2d334c;
 		.flex-c-c.flex-1 {

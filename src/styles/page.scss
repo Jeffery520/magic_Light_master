@@ -74,7 +74,7 @@
         background: linear-gradient(
                         to right,
                         $uni-text-highlight-color2,
-                        $uni-text-highlight-color 80%
+                        $uni-text-active-color1 80%
         );
         opacity: 0.8;
       }
@@ -127,7 +127,7 @@
         background: linear-gradient(
                         to right,
                         $uni-text-highlight-color2,
-                        $uni-text-highlight-color
+                        $uni-text-active-color1
         );
         opacity: 0.7;
       }
@@ -157,7 +157,7 @@
     .custom_slider_button {
       width: 40rpx;
       height: 40rpx;
-      background-color: $uni-text-highlight-color;
+      background-color: $uni-text-active-color1;
       background-image: url(data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAARCAMAAADjcdz2AAAAOVBMVEUAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAC8dlA9AAAAE3RSTlMACiAdBhIxPDVBOEVIDiUVTVAqP8urBgAAAJJJREFUGNNtj0sWAyEIBEEZBVEzk/sfNt2TzyoueJSFj1ZwHtNELAtaD5R6HiLHBKs3qDIVbVaoNhR+wtvJ+e6GGg/M5zYxbwtewBIbZTjmd6JbeTN9GRXsfPrsB+Y7WIcLWcmFq7Da4D+8hNHKpd9oTRg1yEH2/i/6hUu7mGfcPuA1C7kpakKt91fIVeAtfn7HC4SLBFzfjcAOAAAAAElFTkSuQmCC);
       background-size: 10rpx 10rpx;
       border-radius: 100%;
@@ -204,7 +204,7 @@
     border: none;
     padding: 0;
     text-align: center;
-    color: rgba(#fff, 0.9);
+    color: $uni-white-color;
     font-size: $uni-font-size-base;
     background: linear-gradient(to right, #1cb9c0, #6c60e1, #883fea);
     border-radius: 70px;

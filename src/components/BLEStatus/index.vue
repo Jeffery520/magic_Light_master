@@ -1,17 +1,13 @@
 <template>
 	<view class="ble_status_wrap">
-		<view class="ble_status_top">
+		<view class="ble_status_top" :class="{ is_connected: connected }">
 			<view>
-				<text v-if="connected && showState" class="ble_status_left"
+				<text v-if="showState && connected" class="ble_status_left"
 					>运行状态：{{ !connected ? '未连接' : '良好' }}</text
 				>
 			</view>
 
-			<view
-				class="ble_status_right"
-				:class="{ is_connected: connected }"
-				@click="handleOpen"
-			>
+			<view class="ble_status_right" @click="handleOpen">
 				<image src="~@/static/images/ble_state.png" mode="aspectFit" />
 				<text class="text-overflow1">{{
 					connected || currentBle ? currentBle : '蓝牙连接'
@@ -602,6 +598,7 @@ export default {
 					target.value1 = hexToNumber(data2); // 灯光数量
 					target.value2 = hexToNumber(data3); // 亮度
 					target.value3 = hexToNumber(data4); // 呼吸节奏
+					target.value6 = data5; // 灯条模式
 				}
 
 				const newZoneDataA = zoneDataA.map((item) => {
@@ -781,10 +778,14 @@ export default {
 		justify-content: space-between;
 		padding: 5rpx 0;
 
+		&.is_connected {
+			opacity: 1;
+			color: $uni-text-active-color1;
+		}
+
 		.ble_status_left {
 			display: flex;
 			align-items: center;
-			color: $uni-text-color;
 			font-size: $uni-font-size-base;
 			z-index: 99;
 			image {
@@ -800,10 +801,7 @@ export default {
 			display: flex;
 			align-items: center;
 			z-index: 9999999999;
-			&.is_connected {
-				opacity: 1;
-				color: $uni-text-highlight-color;
-			}
+
 			image {
 				width: 40rpx;
 				height: 40rpx;
