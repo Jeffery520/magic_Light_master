@@ -1,4 +1,4 @@
-let colorRGB2Hex = function (r, g, b) {
+const colorRGB2Hex = function (r, g, b) {
 	r = parseInt(r);
 	g = parseInt(g);
 	b = parseInt(b);
@@ -6,7 +6,7 @@ let colorRGB2Hex = function (r, g, b) {
 	return hex;
 };
 
-let rgb2hsl = function (r, g, b) {
+const rgb2hsl = function (r, g, b) {
 	(r /= 255), (g /= 255), (b /= 255);
 	var max = Math.max(r, g, b),
 		min = Math.min(r, g, b);
@@ -35,7 +35,7 @@ let rgb2hsl = function (r, g, b) {
 	return [h, s, l];
 };
 
-let hslToRgb = function (h, s, l) {
+const hslToRgb = function (h, s = 1, l = 0.5) {
 	var r, g, b;
 	if (s == 0) {
 		r = g = b = l; // achromatic
@@ -57,7 +57,7 @@ let hslToRgb = function (h, s, l) {
 	return [Math.round(r * 255), Math.round(g * 255), Math.round(b * 255)];
 };
 
-let drawRing = function (ctx, width, height, dpr) {
+const drawRing = function (ctx, width, height, dpr) {
 	// 画圆环
 	var radius = parseInt(width / 2);
 	var colorWheelNumber = 36;
@@ -93,7 +93,7 @@ let drawRing = function (ctx, width, height, dpr) {
 	ctx.stroke();
 };
 
-let drawSlider = function (ctx, width, height, angle, dpr, image) {
+const drawSlider = function (ctx, width, height, angle, dpr, image) {
 	let radius = parseInt(width / 2);
 	ctx.save();
 	ctx.clearRect(0, 0, width, height);

@@ -2,7 +2,7 @@
 	<view class="ble_status_wrap">
 		<view class="ble_status_top" :class="{ is_connected: connected }">
 			<view>
-				<text v-if="showState && connected" class="ble_status_left"
+				<text v-if="connected && showState" class="ble_status_left"
 					>运行状态：{{ !connected ? '未连接' : '良好' }}</text
 				>
 			</view>
@@ -562,48 +562,50 @@ export default {
 
 			/** 1606 氛围灯信息 **/
 			if (aHexStr.indexOf('2E1606') >= 0) {
-				const target = zoneDataA.find((item) => item.code === data0);
-
-				// 模式设置数据
-				if (data1 === '01') {
-					target.mode = data2;
-
-					// 情景模式、人群模式、心情模式
-					if (['01', '02', '04'].includes(data2)) {
-						target[`_mode${data2}`] = data3;
-					}
-
-					// 单色模式
-					if (data1 === '00') {
-						target.value4 = util.hslToRgb(`${data3}${data4}${data5}`).join(',');
-					}
-
-					// 天气模式
-					if (data2 === '03') {
-						target.weather = {
-							name: '晴天',
-							temperature: hexToNumber(data3),
-							humidity: hexToNumber(data4)
-						};
-					}
-
-					// 爆闪模式
-					if (data1 === '05') {
-						target.value5 = hexToNumber(data3);
-					}
-				}
-
-				// 参数设置数据
-				if (data1 === '00') {
-					target.value1 = hexToNumber(data2); // 灯光数量
-					target.value2 = hexToNumber(data3); // 亮度
-					target.value3 = hexToNumber(data4); // 呼吸节奏
-					target.value6 = data5; // 灯条模式
-				}
-
 				const newZoneDataA = zoneDataA.map((item) => {
 					if (item.code === data0) {
-						return target;
+						// 模式设置数据
+						if (data1 === '01') {
+							item.mode = data2;
+
+							// 情景模式、人群模式、心情模式
+							if (['01', '02', '04'].includes(data2)) {
+								item[`_mode${data2}`] = data3;
+							}
+
+							// 单色模式
+							if (data2 === '00') {
+								item.value4 = [
+									hexToNumber(data3),
+									hexToNumber(data4),
+									hexToNumber(data5)
+								].join(',');
+
+								console.log('颜色值====', data3, data4, data5);
+							}
+
+							// 天气模式
+							if (data2 === '03') {
+								item.weather = {
+									name: '晴天',
+									temperature: hexToNumber(data3),
+									humidity: hexToNumber(data4)
+								};
+							}
+
+							// 爆闪模式
+							if (data2 === '05') {
+								item.value5 = hexToNumber(data3);
+							}
+						}
+
+						// 参数设置数据
+						if (data1 === '00') {
+							item.value1 = hexToNumber(data2); // 灯光数量
+							item.value2 = hexToNumber(data3); // 亮度
+							item.value3 = hexToNumber(data4); // 呼吸节奏
+							item.value6 = data5; // 灯条模式
+						}
 					}
 					return item;
 				});
@@ -619,6 +621,7 @@ export default {
 					data4,
 					data5
 				);
+
 				return;
 			}
 
@@ -626,21 +629,14 @@ export default {
 			if (aHexStr.indexOf('2E1703') >= 0) {
 				const [data0, data1, data2] = hexArr;
 
-				const target = zoneDataA.find((item) => item.code === data0);
-
-				if (!target) {
-					return;
-				}
-
-				target.signal.forEach((item) => {
-					if (item.code === data1) {
-						item.value = data2;
-					}
-				});
-
 				const newZoneDataA = zoneDataA.map((item) => {
 					if (item.code === data0) {
-						return target;
+						item.signal = item.signal.map((signal) => {
+							if (signal.code === data1) {
+								signal.value = data2;
+							}
+							return signal;
+						});
 					}
 					return item;
 				});
@@ -770,7 +766,7 @@ export default {
 
 <style lang="scss" scoped>
 .ble_status_wrap {
-	padding: 10rpx 0 30rpx;
+	padding: 10rpx 0 20rpx;
 	z-index: 99;
 	.ble_status_top {
 		display: flex;

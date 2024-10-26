@@ -1,9 +1,9 @@
 <template>
-<uni-shadow-root class="vant-weapp-toast-index"><van-overlay v-if="mask || forbidClick" :show="show" :z-index="zIndex" :custom-style="mask ? '' : 'background-color: transparent;'"></van-overlay>
+<uni-shadow-root class="vant-weapp-toast-index"><van-overlay v-if="(type === 'loading' || mask || forbidClick) && show" :show="show" :z-index="zIndex" :custom-style="mask ? '' : 'background-color: transparent;'"></van-overlay>
 <van-transition :show="show" :custom-style="'z-index: '+(zIndex)" custom-class="van-toast__container">
-  <view :class="'van-toast van-toast--'+((type === 'text' || type === 'html') ? 'text' : 'icon')+' van-toast--'+(position)" @touchmove.stop.prevent="noop">
+  <view :class="'van-toast van-toast--'+((type === 'text' || type === 'html') ? 'text' : 'icon')+' van-toast--'+(position)+' van-toast-show--'+(show)" @touchmove.stop.prevent="noop">
     
-    <text v-if="type === 'text'">{{ message }}</text>
+    <view v-if="type === 'text'">{{ message }}</view>
 
     
     <rich-text v-else-if="type === 'html'" :nodes="message"></rich-text>
@@ -60,5 +60,5 @@ VantComponent({
 export default global['__wxComponents']['vant-weapp/toast/index']
 </script>
 <style platform="mp-weixin">
-@import '../common/index.css';.van-toast{word-wrap:break-word;align-items:center;background-color:var(--toast-background-color,rgba(0,0,0,.7));border-radius:var(--toast-border-radius,8px);box-sizing:initial;color:var(--toast-text-color,#fff);display:flex;flex-direction:column;font-size:var(--toast-font-size,14px);justify-content:center;line-height:var(--toast-line-height,20px);white-space:pre-wrap}.van-toast__container{left:50%;max-width:var(--toast-max-width,70%);position:fixed;top:50%;transform:translate(-50%,-50%);width:-webkit-fit-content;width:fit-content}.van-toast--text{min-width:var(--toast-text-min-width,96px);padding:var(--toast-text-padding,8px 12px)}.van-toast--icon{min-height:var(--toast-default-min-height,88px);padding:var(--toast-default-padding,16px);width:var(--toast-default-width,88px)}.van-toast--icon .van-toast__icon{font-size:var(--toast-icon-size,36px)}.van-toast--icon .van-toast__text{padding-top:8px}.van-toast__loading{margin:10px 0}.van-toast--top{transform:translateY(-30vh)}.van-toast--bottom{transform:translateY(30vh)}
+@import '../common/index.css';.van-toast{word-wrap:break-word;align-items:center;background-color:var(--toast-background-color,rgba(0,0,0,.7));border-radius:var(--toast-border-radius,8px);box-sizing:initial;color:var(--toast-text-color,#fff);display:flex;flex-direction:column;font-size:var(--toast-font-size,14px);justify-content:center;line-height:var(--toast-line-height,20px);white-space:pre-wrap}.van-toast__container{left:50%;max-width:var(--toast-max-width,80%);position:fixed;top:50%;transform:translate(-50%,-50%);width:-webkit-fit-content;width:fit-content}.van-toast--text{min-width:var(--toast-text-min-width,90px);padding:var(--toast-text-padding,8px 12px)}.van-toast--icon{min-height:var(--toast-default-min-height,88px);padding:var(--toast-default-padding,16px);width:var(--toast-default-width,88px)}.van-toast--icon .van-toast__icon{font-size:var(--toast-icon-size,36px)}.van-toast--icon .van-toast__text{padding-top:8px}.van-toast__loading{margin:10px 0}.van-toast--top{transform:translateY(-30vh)}.van-toast--bottom{transform:translateY(30vh).}van-toast-show--false{display:none !important}
 </style>

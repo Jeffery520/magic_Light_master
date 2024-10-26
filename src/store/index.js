@@ -30,30 +30,23 @@ const zoneDataA = [
 			{
 				code: '00',
 				name: '启动',
-				value: '01',
+				value: '00',
 				icon: 'sing_1.png',
-				keys: ['01', '02']
+				keys: ['00', '01', '02']
 			},
-			// {
-			// 	code: '01',
-			// 	name: '行车',
-			// 	value: '03',
-			//  icon: 'sing_2.png',
-			// 	keys: ['03', '04', '05', '06', '07']
-			// },
 			{
 				code: '04',
 				name: '转向',
-				value: '04',
+				value: '00',
 				icon: 'sing_3.png',
-				keys: ['04', '05']
+				keys: ['00', '04', '05']
 			},
 			{
 				code: '02',
 				name: '刹车',
-				value: '06',
+				value: '00',
 				icon: 'sing_4.png',
-				keys: ['06', '07', '08', '09']
+				keys: ['00', '06', '07', '08', '09']
 			}
 		]
 	},
@@ -80,30 +73,23 @@ const zoneDataA = [
 			{
 				code: '00',
 				name: '启动',
-				value: '01',
+				value: '00',
 				icon: 'sing_1.png',
-				keys: ['01', '02']
+				keys: ['00', '01', '02']
 			},
-			// {
-			// 	code: '01',
-			// 	name: '行车',
-			// 	value: '03',
-			//  icon: 'sing_2.png',
-			// 	keys: ['03', '04', '05', '06', '07']
-			// },
 			{
 				code: '04',
 				name: '转向',
-				value: '04',
+				value: '00',
 				icon: 'sing_3.png',
-				keys: ['04', '05']
+				keys: ['00', '04', '05']
 			},
 			{
 				code: '02',
 				name: '刹车',
-				value: '06',
+				value: '00',
 				icon: 'sing_4.png',
-				keys: ['06', '07', '08', '09']
+				keys: ['00', '06', '07', '08', '09']
 			}
 		]
 	},
@@ -130,30 +116,23 @@ const zoneDataA = [
 			{
 				code: '00',
 				name: '启动',
-				value: '01',
+				value: '00',
 				icon: 'sing_1.png',
-				keys: ['01', '02']
+				keys: ['00', '01', '02']
 			},
-			// {
-			// 	code: '01',
-			// 	name: '行车',
-			// 	value: '03',
-			//  icon: 'sing_2.png',
-			// 	keys: ['03', '04', '05', '06', '07']
-			// },
 			{
 				code: '04',
 				name: '转向',
-				value: '04',
+				value: '00',
 				icon: 'sing_3.png',
-				keys: ['04', '05']
+				keys: ['00', '04', '05']
 			},
 			{
 				code: '02',
 				name: '刹车',
-				value: '06',
+				value: '00',
 				icon: 'sing_4.png',
-				keys: ['06', '07', '08', '09']
+				keys: ['00', '06', '07', '08', '09']
 			}
 		]
 	}

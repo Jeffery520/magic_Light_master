@@ -60,13 +60,13 @@
 						:focus="focus1"
 						:selectionStart="selectionStart"
 						:selectionEnd="selectionEnd"
-						maxlength="3"
+						maxlength="4"
 						inputAlign="center"
 						placeholder="请输入"
 						type="number"
 						border="surround"
 						fontSize="16"
-						:value="inputColor.red"
+						v-model="inputColor.red"
 						@input="onInputColor($event, 'red')"
 						@blur="blurFn(1)"
 					>
@@ -79,13 +79,13 @@
 						:focus="focus2"
 						:selectionStart="selectionStart"
 						:selectionEnd="selectionEnd"
-						maxlength="3"
+						maxlength="4"
 						inputAlign="center"
 						placeholder="请输入"
 						type="number"
 						border="surround"
 						fontSize="16"
-						:value="inputColor.green"
+						v-model="inputColor.green"
 						@input="onInputColor($event, 'green')"
 						@blur="blurFn(2)"
 					>
@@ -98,13 +98,13 @@
 						:focus="focus3"
 						:selectionStart="selectionStart"
 						:selectionEnd="selectionEnd"
-						maxlength="3"
+						maxlength="4"
 						inputAlign="center"
 						placeholder="请输入"
 						type="number"
 						border="surround"
 						fontSize="16"
-						:value="inputColor.blue"
+						v-model="inputColor.blue"
 						@input="onInputColor($event, 'blue')"
 						@blur="blurFn(3)"
 					>
@@ -119,7 +119,7 @@
 
 <script>
 import util from '@/components/ColorPicker/util.js';
-import { throttle } from '@/utils/lodash.min.js';
+import { throttle, debounce } from '@/utils/lodash.min.js';
 let colorPickerCtx = {};
 let sliderCtx = {};
 
@@ -169,7 +169,7 @@ export default {
 			handler(val) {
 				const { red, green, blue } = val;
 
-				this.inputColor = val;
+				this.inputColor = { red, green, blue };
 				this.currentBg = `rgb(${red},${green},${blue})`;
 				this.pickColor = JSON.stringify(val);
 
@@ -206,6 +206,14 @@ export default {
 			if (index == 1) this.focus1 = false;
 			if (index == 2) this.focus2 = false;
 			if (index == 3) this.focus3 = false;
+
+			if (
+				this.inputColor.red !== '' &&
+				this.inputColor.green !== '' &&
+				this.inputColor.blue !== ''
+			) {
+				this.$emit('change', this.inputColor);
+			}
 		},
 		focus1fn() {
 			this.focus1 = false;
@@ -313,39 +321,24 @@ export default {
 				Query.select('#colorPicker')
 					.boundingClientRect((rect) => {
 						this.valueWidthOrHeight = rect.width;
-						this.inputColor = {
-							red: 255,
-							green: 0,
-							blue: 0
-						};
-						this.pickColor = JSON.stringify({
-							red: 255,
-							green: 0,
-							blue: 0
-						});
+						this.inputColor = this.modelValue;
+						this.pickColor = JSON.stringify(this.modelValue);
 						resolve(rect);
 					})
 					.exec();
 			});
 		},
-		onInputColor: throttle(function (event, key = 'red') {
+		onInputColor(event, key = 'red') {
 			if (!key) return;
-			this.inputColor[key] = event?.detail || 0;
-			if (this.inputColor.red > 255) this.inputColor.red = 255;
-			if (this.inputColor.green > 255) this.inputColor.green = 255;
-			if (this.inputColor.blue > 255) this.inputColor.blue = 255;
-			if (
-				this.inputColor.red !== '' &&
-				this.inputColor.green !== '' &&
-				this.inputColor.blue !== ''
-			) {
-				this.$emit('change', this.inputColor);
-			}
-		}, 500),
+
+			const value = isNaN(event.detail) ? 0 : event.detail;
+
+			this.inputColor[key] = Math.min(value, 255);
+		},
 		onFocus() {
 			this.$refs.onFocus1.select();
 		},
-		onSlide: throttle(function (e) {
+		onSlide: debounce(function (e) {
 			uni.vibrateShort();
 			if (e.touches) {
 				let x = e.changedTouches[0].x * this.dpr;
@@ -384,7 +377,7 @@ export default {
 					);
 				}
 			}
-		}, 100)
+		}, 200)
 	}
 };
 </script>

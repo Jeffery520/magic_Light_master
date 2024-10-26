@@ -311,6 +311,9 @@ export default {
 		getBleData() {
 			return this.$store.getters.bleData;
 		},
+		getZoneDataA() {
+			return this.$store.getters.zoneDataA;
+		},
 		zoneModesA() {
 			return this.$store.getters.zoneModesA;
 		},
@@ -324,6 +327,17 @@ export default {
 			return { ...target, options: target?.options || [] };
 		}
 	},
+	watch: {
+		getZoneDataA: {
+			deep: true,
+			immediate: true,
+			handler(newVal) {
+				this.zoneDataA = newVal;
+				this.setZoneData = this.zoneDataA[this.zoneIndex];
+				this.currentModel = this.setZoneData.mode;
+			}
+		}
+	},
 	mounted() {
 		Toast.setDefaultOptions({
 			duration: 1800,
@@ -334,9 +348,6 @@ export default {
 				}, 300);
 			}
 		});
-
-		this.zoneDataA = this.$store.getters.zoneDataA;
-		this.setZoneData = this.zoneDataA[this.zoneIndex];
 	},
 	methods: {
 		_getColorMode(value) {
@@ -461,8 +472,13 @@ export default {
 		// 单色模式
 		colorChange(data) {
 			uni.vibrateShort();
+
 			const { red, green, blue } = data;
 			this.setZoneData.value4 = `${red},${green},${blue}`;
+
+			this.setZoneData.mode = '00';
+			this.currentModel = this.setZoneData.mode;
+
 			this._sendModelColor();
 		},
 		// 天气模式
@@ -515,6 +531,8 @@ export default {
 			const msg = ['86', '06', data0, data1, data2, data3, data4, data5]
 				.map((item) => `${item}`.padStart(2, '0'))
 				.join('');
+
+			console.log('颜色setting========', data3, data4, data5);
 
 			this._checkBleState(() => {
 				this._easySendData(msg, true);
@@ -634,8 +652,9 @@ export default {
 		_getKeysList(keys) {
 			const list = [];
 			Object.keys(this.zoneKeysDataA).forEach((key) => {
+				const keyCode = key.toString().padStart(2, '0');
 				if ((keys || []).includes(key)) {
-					list.push({ label: this.zoneKeysDataA[key], value: key });
+					list.push({ label: this.zoneKeysDataA[key], value: keyCode });
 				}
 			});
 
