@@ -592,9 +592,9 @@ const setBLEMTU = (mtu) => {
 			fail(res) {
 				console.log('=======设置蓝牙MTU长度失败======', res);
 				resolve({
-					ok: false,
-					errCode: res.errCode,
-					errMsg: res.errMsg
+					ok: true,
+					errCode: 0,
+					errMsg: ''
 				});
 			}
 		});
@@ -697,6 +697,12 @@ const writeBLECharacteristicValue = (data) => {
 				});
 			},
 			fail(res) {
+				const bleMsgQueue = store.getters.bleMsgQueue;
+
+				uni.$emit('onSendMsgFail', bleMsgQueue?.at(-1));
+
+				console.log('发送指令失败', JSON.stringify(res));
+
 				resolve({
 					ok: false,
 					errCode: res.errCode,
